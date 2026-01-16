@@ -127,7 +127,7 @@ export default function Home() {
       // Agent Mode (text via WebSocket)
       try {
         const prompt = isCategorySelection
-          ? `El usuario ha seleccionado la categoría: "${query}". Pregúntale amablemente qué quiere saber específicamente sobre esta sección.`
+          ? `${query}`
           : query;
 
         // Send text message to agent
