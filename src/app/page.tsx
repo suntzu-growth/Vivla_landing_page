@@ -124,13 +124,12 @@ export default function Home() {
     setMessages(prev => [...prev, { role: 'assistant', isStreaming: true }]);
 
     if (isAgentEnabled && conversationRef.current) {
-      // Agent Mode (text via WebSocket)
       try {
+        // Si es una selección de categoría, le damos una instrucción clara al Router
         const prompt = isCategorySelection
-          ? `${query}`
+          ? `Por favor, llévame a la sección de ${query}` 
           : query;
 
-        // Send text message to agent
         await conversationRef.current.sendUserMessage(prompt);
 
         // Wait a bit for response to accumulate
