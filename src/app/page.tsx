@@ -14,7 +14,6 @@ interface Message {
   content?: string;
   results?: any[];
   isStreaming?: boolean;
-  directAnswer?: string;
   type?: string;
 }
 
@@ -28,12 +27,10 @@ export default function Home() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isFirstMessageRef = useRef(true);
 
-  // Auto-scroll al final de los mensajes
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Función auxiliar robusta para actualizar mensajes
   const updateAssistantMessage = (content: string, streaming: boolean, results?: any[], type?: string) => {
     setMessages(prev => {
       const updated = [...prev];
@@ -57,25 +54,17 @@ export default function Home() {
       try {
         setAgentStatus('connecting');
         const { TextConversation } = await import('@elevenlabs/client');
-
         const response = await fetch("/api/get-signed-url");
         const { signedUrl } = await response.json();
 
         const conversation = await TextConversation.startSession({
           signedUrl,
           clientTools: {
-            displayTextResponse: async ({ text }: any) => {
-              updateAssistantMessage(text, false);
-            },
             displayNewsResults: async ({ news, summary }: any) => {
-              // Recibe el array de noticias con imágenes OG
               updateAssistantMessage(summary, false, news, 'news');
             },
-            displaySchedule: async ({ schedule, summary }: any) => {
-              updateAssistantMessage(summary, false, schedule, 'schedule');
-            },
-            displayError: async ({ message }: any) => {
-              updateAssistantMessage(`⚠️ ${message}`, false);
+            displayTextResponse: async ({ text }: any) => {
+              updateAssistantMessage(text, false);
             }
           },
           onMessage: (message: any) => {
@@ -83,7 +72,7 @@ export default function Home() {
             if (!text) return;
 
             const lowerText = text.toLowerCase();
-            const ignoredPhrases = ["irabazi arte", "euskal irrati telebista", "grupo de comunicación público", "estás ahí"];
+            const ignoredPhrases = ["irabazi arte", "euskal irrati telebista", "grupo de comunicación público"];
 
             if (isFirstMessageRef.current && ignoredPhrases.some(p => lowerText.includes(p))) return;
             if (text.length > 5) isFirstMessageRef.current = false;
@@ -94,26 +83,18 @@ export default function Home() {
                  const last = updated[updated.length - 1];
                  if (last && last.role === 'assistant') {
                     const currentContent = last.content === 'Consultando...' ? '' : (last.content || '');
-                    updated[updated.length - 1] = { 
-                      ...last, 
-                      content: currentContent + text,
-                      isStreaming: true 
-                    };
+                    updated[updated.length - 1] = { ...last, content: currentContent + text, isStreaming: true };
                  }
                  return updated;
                });
             }
-
-            if (message.type === 'agent_response_end' || message.is_final) setIsStreaming(false);
-          },
-          onDisconnect: () => setAgentStatus('disconnected')
+            if (message.type === 'agent_response_end') setIsStreaming(false);
+          }
         });
 
         conversationRef.current = conversation;
         setAgentStatus('connected');
-      } catch (err) {
-        setAgentStatus('disconnected');
-      }
+      } catch (err) { setAgentStatus('disconnected'); }
     };
 
     initAgent();
@@ -122,68 +103,45 @@ export default function Home() {
 
   const handleSearch = async (query?: string, isCategorySelection: boolean = false) => {
     if (!query || agentStatus !== 'connected') return;
-
     setMessages(prev => [...prev, { role: 'user', content: query }, { role: 'assistant', content: 'Consultando...', isStreaming: true }]);
     setHasSearched(true);
     setIsStreaming(true);
-
     try {
       const prompt = isCategorySelection ? `Sección seleccionada: ${query}` : query;
       await conversationRef.current.sendUserMessage(prompt);
-    } catch (err) {
-      setIsStreaming(false);
-    }
+    } catch (err) { setIsStreaming(false); }
   };
 
   return (
-    <div className="min-h-screen bg-white font-sans text-gray-900 flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col font-sans">
       <Header />
-
-      <main className="flex-1 flex flex-col relative pt-16">
-        {/* LANDING PAGE ORIGINAL RECUPERADA */}
+      <main className="flex-1 flex flex-col pt-16 relative">
         {!hasSearched && (
-          <div className="flex flex-col items-center w-full pt-12 animate-in fade-in duration-700">
+          <div className="flex flex-col items-center w-full pt-12 animate-in fade-in duration-1000">
             <SearchHero />
-            
             <div className="mb-4 h-6">
-              {agentStatus === 'connected' ? (
-                <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-100 font-medium">
-                  ● Agente Conectado (Texto)
-                </span>
-              ) : (
-                <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full border border-amber-100 animate-pulse font-medium">
-                  ○ Conectando asistente...
-                </span>
-              )}
+              <span className={`text-xs px-2 py-1 rounded-full border ${agentStatus === 'connected' ? 'text-green-600 bg-green-50 border-green-100' : 'text-amber-600 bg-amber-50 border-amber-100 animate-pulse'}`}>
+                ● Agente {agentStatus === 'connected' ? 'Conectado' : 'Conectando...'}
+              </span>
             </div>
-
-            <div className="w-full my-8">
-              <QuestionMarquee onQuestionClick={(q) => handleSearch(q)} />
-              <TopicSelector onSelect={(t) => handleSearch(t, true)} className="mt-8" />
-            </div>
-
-            <div className="w-full px-4 mb-12">
-              <SearchInput onSearch={(q) => handleSearch(q)} />
+            <QuestionMarquee onQuestionClick={(q) => handleSearch(q)} />
+            <TopicSelector onSelect={(t) => handleSearch(t, true)} className="mt-8" />
+            <div className="w-full px-4 mb-20 max-w-3xl mt-8">
+                <SearchInput onSearch={(q) => handleSearch(q)} />
             </div>
           </div>
         )}
 
-        {/* CHAT / RESULTADOS */}
         {hasSearched && (
-          <div className="container mx-auto px-4 pb-32 flex flex-col space-y-8 pt-8 max-w-4xl">
+          <div className="container mx-auto px-4 pb-40 max-w-4xl pt-8 space-y-12">
             {messages.map((msg, idx) => (
               <div key={idx} className={`w-full ${msg.role === 'user' ? 'flex justify-end' : ''}`}>
                 {msg.role === 'user' ? (
-                  <div className="bg-gray-100 text-gray-800 px-6 py-3 rounded-2xl rounded-tr-sm max-w-[80%] text-lg border border-gray-200 shadow-sm">
+                  <div className="bg-gray-100 text-gray-800 px-6 py-4 rounded-2xl max-w-[85%] text-lg font-medium shadow-sm border border-gray-200">
                     {msg.content}
                   </div>
                 ) : (
-                  <ResultsStream
-                    isStreaming={!!msg.isStreaming}
-                    results={msg.results}
-                    directAnswer={msg.content}
-                    text={msg.content}
-                  />
+                  <ResultsStream isStreaming={!!msg.isStreaming} results={msg.results} text={msg.content} />
                 )}
               </div>
             ))}
@@ -191,16 +149,14 @@ export default function Home() {
           </div>
         )}
 
-        {/* INPUT PERSISTENTE */}
         {hasSearched && (
-          <div className="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-xl border-t border-gray-100 p-4 pb-8 z-50">
+          <div className="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-xl border-t border-gray-100 p-6 z-50">
             <div className="container mx-auto max-w-3xl">
               <SearchInput onSearch={(q) => handleSearch(q)} />
             </div>
           </div>
         )}
       </main>
-
       {!hasSearched && <Footer />}
     </div>
   );
