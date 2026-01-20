@@ -31,9 +31,10 @@ export default function Home() {
       if (lastIdx !== -1) {
         const lastMessage = updated[lastIdx];
         
-        // EVITAR DUPLICADOS: Si el 'content' nuevo es igual al que ya hay, o es muy corto/vacío, lo ignoramos
-        const isDuplicate = content?.trim() === lastMessage.content?.trim();
-        const finalContent = (content && !isDuplicate) ? content : lastMessage.content;
+        // Si el content de la herramienta es vacío o un espacio (como pedimos en el prompt),
+        // mantenemos el texto del streaming que ya tiene los números y espacios.
+        const isToolSummaryEmpty = !content || content.trim().length <= 1;
+        const finalContent = isToolSummaryEmpty ? lastMessage.content : content;
 
         updated[lastIdx] = {
           ...lastMessage,
