@@ -3,76 +3,52 @@ import * as cheerio from 'cheerio';
 
 export async function POST(request: NextRequest) {
   try {
-    const { category, limit = 5 } = await request.json();
+    const { category } = await request.json();
     const domain = 'https://orain.eus';
     
-    // Mapeo de categorías para asegurar que la URL sea correcta
+    // Diccionario de categorías para evitar errores de tildes o términos
     const categoryMap: { [key: string]: string } = {
-      'politica': 'politica',
-      'economía': 'economia',
+      'noticias': '',
       'economia': 'economia',
-      'sociedad': 'sociedad',
+      'economía': 'economia',
+      'política': 'politica',
+      'politica': 'politica',
+      'deportes': 'deportes',
       'cultura': 'cultura',
-      'deportes': 'deportes'
+      'sociedad': 'sociedad'
     };
 
-    const cleanCategory = category ? categoryMap[category.toLowerCase()] || category.toLowerCase() : '';
-    const url = `${domain}/es/${cleanCategory}`;
-
-    console.log("Consultando URL:", url);
+    const targetCategory = categoryMap[category?.toLowerCase()] || '';
+    const url = targetCategory ? `${domain}/es/${targetCategory}` : `${domain}/es/`;
 
     const response = await fetch(url, {
-      headers: { 
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept-Language': 'es-ES,es;q=0.9'
-      },
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36' },
+      next: { revalidate: 60 } // Cache de 1 minuto
     });
 
-    if (!response.ok) throw new Error(`Error en la web de EITB: ${response.status}`);
+    if (!response.ok) throw new Error("Error en la conexión con la fuente");
 
     const html = await response.text();
     const $ = cheerio.load(html);
-    
-    // Selector más amplio para capturar noticias en diferentes secciones
-    const elements = $('article, .noticia, .news-block, .card-noticia').toArray().slice(0, limit);
-
-    if (elements.length === 0) {
-      return NextResponse.json({ success: true, news: [], message: "No se encontraron artículos" });
-    }
+    const elements = $('article').toArray().slice(0, 5);
 
     const news = await Promise.all(elements.map(async (el) => {
       const $el = $(el);
       const link = $el.find('a').first().attr('href');
-      if (!link) return null;
-      
-      const cleanUrl = link.startsWith('http') ? link : `${domain}${link}`;
+      const fullUrl = link?.startsWith('http') ? link : `${domain}${link}`;
 
-      let data = {
-        title: $el.find('h2, h3, .titulo').first().text().trim(),
-        image: null as string | null,
-        url: cleanUrl,
-        summary: $el.find('p, .sumario, .lead').first().text().trim()
+      return {
+        title: $el.find('h2, h3').text().trim(),
+        url: fullUrl,
+        summary: $el.find('p, .sumario').text().trim(),
+        // La imagen se extrae en el ResultsStream o aquí mismo con un fetch adicional
+        image: null 
       };
-
-      try {
-        const detailRes = await fetch(cleanUrl, { 
-          headers: { 'User-Agent': 'Mozilla/5.0' },
-          signal: AbortSignal.timeout(2000) 
-        });
-        const detailHtml = await detailRes.text();
-        const $m = cheerio.load(detailHtml);
-        data.image = $m('meta[property="og:image"]').attr('content') || null;
-        if (!data.summary) data.summary = $m('meta[property="og:description"]').attr('content') || "";
-      } catch (e) {
-        console.error("Error metadatos:", cleanUrl);
-      }
-
-      return data;
     }));
 
     return NextResponse.json({ 
       success: true, 
-      news: news.filter(n => n !== null && n.title !== "") 
+      news: news.filter(n => n.title !== "") 
     });
 
   } catch (error: any) {

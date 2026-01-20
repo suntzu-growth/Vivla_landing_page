@@ -97,11 +97,24 @@ export default function Home() {
     initAgent();
   }, []);
 
-  const handleSearch = async (query: string) => {
+  const handleSearch = async (query: string, isCategorySelection: boolean = false) => {
     if (!query || agentStatus !== 'connected') return;
 
-    // Si la consulta es solo una palabra (ej: "economia"), enviamos un prompt más claro al agente
-    const processedQuery = query.split(' ').length === 1 ? `Busca noticias de ${query}` : query;
+    let processedQuery = query;
+
+    // CASO ESPECIAL: Si pulsa el botón "Noticias" de la landing
+    if (query.toLowerCase() === "noticias" && !hasSearched) {
+      setHasSearched(true);
+      // Añadimos un mensaje de bienvenida del asistente directamente
+      setMessages([{ role: 'assistant', content: '¡Hola! Soy el asistente de EITB. ¿De qué categoría te gustaría que busquemos noticias hoy? (Política, Economía, Deportes...)', isStreaming: false }]);
+      // No enviamos mensaje al agente todavía, esperamos a que el usuario responda
+      return;
+    }
+
+    // Si es una categoría específica (desde TopicSelector), ahí sí buscamos
+    if (isCategorySelection) {
+      processedQuery = `Busca noticias de ${query}`;
+    }
 
     setMessages(prev => [...prev, { role: 'user', content: query }]);
     setHasSearched(true);
