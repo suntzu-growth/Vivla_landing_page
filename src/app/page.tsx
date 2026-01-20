@@ -23,16 +23,19 @@ export default function Home() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const updateAssistantMessage = (content: string, streaming: boolean, results?: any[]) => {
+  const updateAssistantMessage = (content: string, streaming: boolean, results?: any[], type?: string) => {
     setMessages(prev => {
       const updated = [...prev];
       const lastIdx = updated.findLastIndex(m => m.role === 'assistant');
       if (lastIdx !== -1) {
         updated[lastIdx] = {
           ...updated[lastIdx],
-          content: content || updated[lastIdx].content, // Prioriza el nuevo contenido si existe
+          // IMPORTANTE: Si hay contenido nuevo (el detalle), lo usamos
+          content: content || updated[lastIdx].content,
           isStreaming: streaming,
-          results: results || updated[lastIdx].results // Mantiene resultados anteriores si no hay nuevos
+          // Si hay resultados nuevos (la tarjeta), los añadimos o reemplazamos
+          results: results || updated[lastIdx].results,
+          type: type || 'news'
         };
       }
       return updated;
@@ -52,8 +55,12 @@ export default function Home() {
           signedUrl,
           clientTools: {
             displayNewsResults: async ({ news, summary }: any) => {
-              updateAssistantMessage(summary, false, news);
-              return "Noticias mostradas";
+              // Si news llega como un objeto único en lugar de array, lo envolvemos
+              const newsArray = Array.isArray(news) ? news : [news];
+              
+              // Forzamos la actualización del mensaje con el texto detallado y la noticia
+              updateAssistantMessage(summary, false, newsArray, 'news');
+              return "Detalles mostrados correctamente";
             },
             displayTextResponse: async ({ text }: any) => {
               updateAssistantMessage(text, false);
