@@ -1,167 +1,190 @@
+// app/api/tools/get-sports-news/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import * as cheerio from 'cheerio';
-import { newsCache } from '@/lib/news-cache';
 
 export async function POST(request: NextRequest) {
-    try {
-        const { team, competition, limit } = await request.json();
+  try {
+    const body = await request.json();
+    let { team, limit } = body;
+    
+    // Defaults
+    limit = limit || 5;
+    team = team || '';
+    
+    console.log('[get_sports_news] Recibido:', { team, limit });
 
-        const cacheKey = `sports:${team || 'all'}:${competition || 'all'}:${limit || 10}`;
-        const cached = newsCache.get(cacheKey);
+    const domain = 'https://kirolakeitb.eus';
+    
+    // Normalización de equipos
+    const teamMap: Record<string, string> = {
+      // Sin equipo específico
+      '': '',
+      'general': '',
+      'todas': '',
+      'todos': '',
+      
+      // Athletic Club
+      'athletic': 'athletic',
+      'athletic club': 'athletic',
+      'athletic bilbao': 'athletic',
+      'bilbao': 'athletic',
+      'leones': 'athletic',
+      
+      // Real Sociedad
+      'real sociedad': 'real sociedad',
+      'real': 'real sociedad',
+      'la real': 'real sociedad',
+      'donostia': 'real sociedad',
+      'txuri urdin': 'real sociedad',
+      
+      // Alavés
+      'alaves': 'alavés',
+      'alavés': 'alavés',
+      'deportivo alaves': 'alavés',
+      'deportivo alavés': 'alavés',
+      'vitoria': 'alavés',
+      'glorioso': 'alavés',
+      
+      // Eibar
+      'eibar': 'eibar',
+      'sd eibar': 'eibar',
+      
+      // Otros deportes
+      'baskonia': 'baskonia',
+      'basket': 'baloncesto',
+      'baloncesto': 'baloncesto',
+      'ciclismo': 'ciclismo',
+      'pelota': 'pelota vasca'
+    };
 
-        if (cached) {
-            console.log('[Sports] Returning cached results');
-            return NextResponse.json({ ...cached, cached: true });
-        }
+    const normalizedTeam = teamMap[team.toLowerCase()] ?? '';
+    
+    console.log('[get_sports_news] Equipo normalizado:', normalizedTeam);
 
-        // URL de Kirolak EITB (página oficial de deportes de EITB)
-        const url = 'https://kirolakeitb.eus/es/';
+    // URL base de deportes
+    const url = `${domain}/es/`;
 
-        console.log('[Sports] Fetching from:', url);
+    console.log('[get_sports_news] URL:', url);
 
-        const response = await fetch(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (compatible; EITBBot/1.0)',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'es-ES,es;q=0.9',
-            },
-        });
+    // Fetch con timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+    const response = await fetch(url, {
+      headers: { 
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36' 
+      },
+      signal: controller.signal,
+      next: { revalidate: 60 }
+    });
 
-        const html = await response.text();
-        const $ = cheerio.load(html);
+    clearTimeout(timeoutId);
 
-        const sports: any[] = [];
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
-        // Selectores específicos para Kirolak EITB
-        $('article, .noticia-deportiva, .news-item, .card-deporte, .sport-card, .item-kirol').each((index, element) => {
-            if (limit && sports.length >= limit) return false;
+    const html = await response.text();
+    const $ = cheerio.load(html);
+    
+    // Extraer artículos deportivos
+    let elements = $('article').toArray();
 
-            const $article = $(element);
+    // Si se especificó un equipo, filtrar
+    if (normalizedTeam) {
+      elements = elements.filter(el => {
+        const $el = $(el);
+        const title = $el.find('h2, h3, h4').text().toLowerCase();
+        const summary = $el.find('p, .sumario').text().toLowerCase();
+        return title.includes(normalizedTeam) || summary.includes(normalizedTeam);
+      });
+    }
 
-            const title = $article.find('h2, h3, h4, .titulo, .title, .headline').first().text().trim() ||
-                $article.find('a').first().attr('title')?.trim() || '';
+    // Limitar resultados
+    elements = elements.slice(0, Math.min(limit, 10));
 
-            const summary = $article.find('p, .sumario, .summary, .descripcion').first().text().trim();
-            const link = $article.find('a').first().attr('href');
-            const image = $article.find('img').first().attr('src') || $article.find('img').first().attr('data-src');
-            const date = $article.find('time, .fecha, .date').first().text().trim() ||
-                $article.find('time').first().attr('datetime');
+    console.log('[get_sports_news] Artículos encontrados:', elements.length);
 
-            // Detectar deporte/equipo mencionado
-            const titleLower = title.toLowerCase();
-            const summaryLower = summary.toLowerCase();
-            let sport = 'general';
+    // Procesar noticias deportivas
+    const news = await Promise.all(
+      elements.map(async (el) => {
+        const $el = $(el);
+        const link = $el.find('a').first().attr('href');
+        const fullUrl = link?.startsWith('http') ? link : `${domain}${link}`;
 
-            if (titleLower.includes('athletic') || titleLower.includes('bilbao')) sport = 'Athletic Club';
-            else if (titleLower.includes('real sociedad') || titleLower.includes('realeko')) sport = 'Real Sociedad';
-            else if (titleLower.includes('alavés') || titleLower.includes('alaves')) sport = 'Deportivo Alavés';
-            else if (titleLower.includes('eibar')) sport = 'SD Eibar';
-            else if (titleLower.includes('fútbol') || titleLower.includes('futbol')) sport = 'Fútbol';
-            else if (titleLower.includes('baloncesto') || titleLower.includes('basket')) sport = 'Baloncesto';
-            else if (titleLower.includes('ciclismo')) sport = 'Ciclismo';
-
-            if (title && title.length > 10) {
-                const newsItem = {
-                    title,
-                    summary: summary || 'Sin resumen disponible',
-                    url: link ? (link.startsWith('http') ? link : `https://kirolakeitb.eus${link}`) : null,
-                    image: image ? (image.startsWith('http') ? image : `https://kirolakeitb.eus${image}`) : null,
-                    publishedAt: date || 'Hoy',
-                    sport,
-                    category: 'deportes',
-                    source: 'Kirolak EITB'
-                };
-
-                // Filtrar por equipo si se especifica
-                if (team) {
-                    const teamLower = team.toLowerCase();
-                    if (titleLower.includes(teamLower) || summaryLower.includes(teamLower)) {
-                        sports.push(newsItem);
-                    }
-                } else {
-                    sports.push(newsItem);
-                }
-            }
-        });
-
-        // Fallback: selectores generales
-        if (sports.length === 0) {
-            $('.item, .entry, .post, div[class*="noticia"], div[class*="card"]').each((index, element) => {
-                if (limit && sports.length >= limit) return false;
-
-                const $item = $(element);
-                const title = $item.find('h1, h2, h3, h4').first().text().trim();
-                const summary = $item.find('p').first().text().trim();
-                const link = $item.find('a').first().attr('href');
-
-                // Solo incluir si parece deportivo
-                const titleLower = title.toLowerCase();
-                const isRelevant = titleLower.includes('athletic') ||
-                    titleLower.includes('real sociedad') ||
-                    titleLower.includes('alavés') ||
-                    titleLower.includes('eibar') ||
-                    titleLower.includes('partido') ||
-                    titleLower.includes('gol') ||
-                    titleLower.includes('deporte');
-
-                if (title && title.length > 10 && isRelevant) {
-                    sports.push({
-                        title,
-                        summary: summary || 'Sin resumen disponible',
-                        url: link ? (link.startsWith('http') ? link : `https://kirolakeitb.eus${link}`) : null,
-                        image: null,
-                        publishedAt: 'Hoy',
-                        sport: 'general',
-                        category: 'deportes',
-                        source: 'Kirolak EITB'
-                    });
-                }
-            });
-        }
-
-        console.log(`[Sports] Found ${sports.length} sports news`);
-
-        const result = {
-            success: true,
-            count: sports.length,
-            team: team || 'todos',
-            competition: competition || 'todas',
-            news: sports.slice(0, limit || 10),
-            scrapedAt: new Date().toISOString(),
-            cached: false,
-            source: 'https://kirolakeitb.eus/es/'
+        let itemData = {
+          title: $el.find('h2, h3, h4').text().trim(),
+          url: fullUrl,
+          summary: $el.find('p, .sumario, .lead').text().trim(),
+          image: null as string | null,
+          team: normalizedTeam || detectTeam($el.text())
         };
 
-        newsCache.set(cacheKey, result);
-        return NextResponse.json(result);
+        // Obtener detalles
+        try {
+          const detailController = new AbortController();
+          const detailTimeoutId = setTimeout(() => detailController.abort(), 5000);
 
-    } catch (error: any) {
-        console.error('[Sports] Error:', error);
-        return NextResponse.json(
-            {
-                success: false,
-                error: 'Failed to fetch sports news',
-                details: error.message,
-            },
-            { status: 500 }
-        );
-    }
+          const detailRes = await fetch(fullUrl, { 
+            headers: { 'User-Agent': 'Mozilla/5.0' },
+            signal: detailController.signal
+          });
+
+          clearTimeout(detailTimeoutId);
+
+          if (detailRes.ok) {
+            const detailHtml = await detailRes.text();
+            const $detail = cheerio.load(detailHtml);
+            
+            itemData.image = $detail('meta[property="og:image"]').attr('content') || 
+                            $detail('article img').first().attr('src') || 
+                            null;
+            
+            const ogDesc = $detail('meta[property="og:description"]').attr('content');
+            if (ogDesc && ogDesc.length > itemData.summary.length) {
+              itemData.summary = ogDesc;
+            }
+          }
+        } catch (e) {
+          console.warn('[get_sports_news] Error obteniendo detalles de:', fullUrl);
+        }
+
+        return itemData;
+      })
+    );
+
+    // Filtrar noticias válidas
+    const validNews = news.filter(n => n.title !== "" && n.title.length > 10);
+
+    console.log('[get_sports_news] Noticias válidas:', validNews.length);
+
+    return NextResponse.json({ 
+      success: true, 
+      count: validNews.length,
+      team: normalizedTeam || 'general',
+      news: validNews
+    });
+
+  } catch (error: any) {
+    console.error('[get_sports_news] Error:', error.message);
+    
+    return NextResponse.json({ 
+      success: false, 
+      error: error.message,
+      news: []
+    }, { status: 500 });
+  }
 }
 
-export async function GET(request: NextRequest) {
-    const searchParams = request.nextUrl.searchParams;
-    const team = searchParams.get('team') || undefined;
-    const competition = searchParams.get('competition') || undefined;
-    const limit = parseInt(searchParams.get('limit') || '10');
-
-    return POST(
-        new NextRequest(request.url, {
-            method: 'POST',
-            body: JSON.stringify({ team, competition, limit }),
-        })
-    );
+// Helper: Detectar equipo en el texto
+function detectTeam(text: string): string {
+  const lowerText = text.toLowerCase();
+  
+  if (lowerText.includes('athletic')) return 'Athletic Club';
+  if (lowerText.includes('real sociedad') || lowerText.includes('la real')) return 'Real Sociedad';
+  if (lowerText.includes('alavés') || lowerText.includes('alaves')) return 'Deportivo Alavés';
+  if (lowerText.includes('eibar')) return 'SD Eibar';
+  if (lowerText.includes('baskonia')) return 'Baskonia';
+  
+  return 'General';
 }

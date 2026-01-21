@@ -107,7 +107,7 @@ export default function Home() {
     if (query.toLowerCase() === "noticias" && !hasSearched) {
       setHasSearched(true);
       // Añadimos un mensaje de bienvenida del asistente directamente
-      setMessages([{ role: 'assistant', content: '¡Hola! Soy el asistente de EITB. ¿De qué categoría te gustaría que busquemos noticias hoy? (Política, Economía, Deportes...)', isStreaming: false }]);
+      setMessages([{ role: 'assistant', content: '¡Hola! Soy el asistente de EITB. ¿De qué categoría te gustaría que busquemos noticias hoy?', isStreaming: false }]);
       // No enviamos mensaje al agente todavía, esperamos a que el usuario responda
       return;
     }
