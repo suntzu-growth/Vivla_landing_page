@@ -148,8 +148,8 @@ export default function Home() {
       processedQuery = `Hablame de las últimas ${query} de la actualidad`;
     }
 
-    // Añadir mensaje del usuario
-    setMessages(prev => [...prev, { role: 'user', content: query }]);
+    // Añadir mensaje del usuario (mostramos el processedQuery en el chat)
+    setMessages(prev => [...prev, { role: 'user', content: processedQuery }]);
     setHasSearched(true);
     setIsStreaming(true);
     
@@ -192,7 +192,7 @@ export default function Home() {
             </div>
             
             <QuestionMarquee onQuestionClick={handleSearch} />
-            <TopicSelector onSelect={handleSearch} className="mt-8" />
+            <TopicSelector onSelect={(topic) => handleSearch(topic, true)} className="mt-8" />
             <div className="w-full mt-10"><SearchInput onSearch={handleSearch} /></div>
           </div>
         ) : (
