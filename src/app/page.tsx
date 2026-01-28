@@ -85,7 +85,8 @@ export default function Home() {
               const cleanSummary = (summary && summary.trim().length > 1) ? summary : null;
               const newsArray = Array.isArray(news) ? news : [news];
 
-              updateAssistantMessage(cleanSummary, false, newsArray, true);
+              // ✅ NO enviamos el summary para que no sobreescriba el texto de displayTextResponse
+              updateAssistantMessage(null, false, newsArray, true);
               return "Noticias mostradas correctamente";
             },
 
@@ -95,7 +96,8 @@ export default function Home() {
               const cleanSummary = (summary && summary.trim().length > 1) ? summary : null;
               const newsArray = Array.isArray(news) ? news : [news];
 
-              updateAssistantMessage(cleanSummary, false, newsArray, true);
+              // ✅ NO enviamos el summary para que no sobreescriba el texto de displayTextResponse
+              updateAssistantMessage(null, false, newsArray, true);
               return "Deportes mostrados correctamente";
             },
 
