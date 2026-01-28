@@ -50,7 +50,8 @@ export default function Home() {
           ...lastMessage,
           content: finalContent,
           isStreaming: streaming,
-          results: results || lastMessage.results
+          results: results || lastMessage.results,
+          timestamp: Date.now() // ✅ Key única para React
         };
       }
       return updated;
@@ -187,7 +188,8 @@ export default function Home() {
     setMessages(prev => [...prev, { 
       role: 'assistant', 
       content: 'Consultando...', 
-      isStreaming: true 
+      isStreaming: true,
+      timestamp: Date.now() // ✅ Key única para React
     }]);
     
     console.log('[User] Enviando query:', processedQuery);
@@ -228,9 +230,10 @@ export default function Home() {
         ) : (
           <div className="max-w-3xl mx-auto px-6 pb-40 space-y-10 pt-10 animate-in fade-in duration-500">
             {messages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div key={`msg-${i}-${msg.timestamp || i}`} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={msg.role === 'user' ? "bg-blue-600 text-white p-4 rounded-2xl rounded-tr-none shadow-md max-w-[80%]" : "w-full"}>
                   <ResultsStream 
+                    key={`stream-${i}-${msg.timestamp || i}`}
                     isStreaming={!!msg.isStreaming} 
                     results={msg.results} 
                     text={msg.content || ""} 
