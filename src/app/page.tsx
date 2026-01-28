@@ -14,12 +14,13 @@ export default function Home() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [agentStatus, setAgentStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
   const [messages, setMessages] = useState<any[]>([]);
-  
+
   const conversationRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isFirstMessageRef = useRef(true);
   const lastToolCallTimestamp = useRef<number>(0);
-  const lastContentRef = useRef<string>(''); // ✅ NUEVO: Para detectar duplicados
+  const lastContentRef = useRef<string>(''); // ✅ Para detectar duplicados de herramientas
+  const receivedToolTextRef = useRef<boolean>(false); // ✅ NUEVO: Indica que una herramienta ya dio el texto final
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -31,19 +32,20 @@ export default function Home() {
       console.log('[DEBUG] Ignorando client tool duplicado - mismo contenido');
       return;
     }
-    
-    // ✅ Actualizar el último contenido procesado
-    if (fromTool && content) {
+
+    // ✅ NUEVO: Si viene de herramienta y trae texto, marcar que ya tenemos el texto final
+    if (fromTool && content && content.trim().length > 0) {
+      receivedToolTextRef.current = true;
       lastContentRef.current = content;
     }
-    
+
     setMessages(prev => {
       const updated = [...prev];
       const lastIdx = updated.findLastIndex(m => m.role === 'assistant');
-      
+
       if (lastIdx !== -1) {
         const lastMessage = updated[lastIdx];
-        
+
         let finalContent;
         if (fromTool) {
           lastToolCallTimestamp.current = Date.now();
@@ -79,24 +81,24 @@ export default function Home() {
           clientTools: {
             displayNewsResults: async ({ news, summary }: any) => {
               console.log('[Client Tool] displayNewsResults:', { news, summary });
-              
+
               const cleanSummary = (summary && summary.trim().length > 1) ? summary : null;
               const newsArray = Array.isArray(news) ? news : [news];
-              
+
               updateAssistantMessage(cleanSummary, false, newsArray, true);
               return "Noticias mostradas correctamente";
             },
-            
+
             displaySportsResults: async ({ news, summary }: any) => {
               console.log('[Client Tool] displaySportsResults:', { news, summary });
-              
+
               const cleanSummary = (summary && summary.trim().length > 1) ? summary : null;
               const newsArray = Array.isArray(news) ? news : [news];
-              
+
               updateAssistantMessage(cleanSummary, false, newsArray, true);
               return "Deportes mostrados correctamente";
             },
-            
+
             displayTextResponse: async ({ text }: any) => {
               console.log('[Client Tool] displayTextResponse:', text);
               updateAssistantMessage(text, false, undefined, true);
@@ -106,20 +108,27 @@ export default function Home() {
           onMessage: (message: any) => {
             const text = message.message || message.text || '';
             if (!text) return;
-            
-            if (isFirstMessageRef.current && 
-                text === "¡Hola! Soy el asistente de EITB. Por ahora puedo ayudarte con las últimas noticias de actualidad del País Vasco. ¿Qué te gustaría saber?") {
+
+            if (isFirstMessageRef.current &&
+              text === "¡Hola! Soy el asistente de EITB. Por ahora puedo ayudarte con las últimas noticias de actualidad del País Vasco. ¿Qué te gustaría saber?") {
               console.log('[Agent] Mensaje de bienvenida filtrado');
               isFirstMessageRef.current = false;
               return;
             }
-            
+
             if (isFirstMessageRef.current) {
               isFirstMessageRef.current = false;
             }
 
+            // ✅ NUEVO: Si ya recibimos el texto de una herramienta, ignorar cualquier streaming posterior
+            // Esto soluciona la duplicación en el router ("Hola")
+            if (receivedToolTextRef.current) {
+              console.log('[Agent] Ignorando streaming porque el texto ya fue provisto por herramienta');
+              return;
+            }
+
             const timeSinceLastTool = Date.now() - lastToolCallTimestamp.current;
-            if (timeSinceLastTool < 2000) { // ✅ Aumentado a 2 segundos para textos largos
+            if (timeSinceLastTool < 2000) {
               console.log('[Agent] Ignorando streaming duplicado (recién vino de client tool)');
               return;
             }
@@ -130,10 +139,10 @@ export default function Home() {
                 const lastIdx = updated.findLastIndex(m => m.role === 'assistant');
                 if (lastIdx !== -1) {
                   const baseContent = updated[lastIdx].content === 'Consultando...' ? '' : updated[lastIdx].content;
-                  updated[lastIdx] = { 
-                    ...updated[lastIdx], 
-                    content: baseContent + text, 
-                    isStreaming: true 
+                  updated[lastIdx] = {
+                    ...updated[lastIdx],
+                    content: baseContent + text,
+                    isStreaming: true
                   };
                 }
                 return updated;
@@ -141,17 +150,17 @@ export default function Home() {
             }
           }
         });
-        
+
         conversationRef.current = conversation;
         setAgentStatus('connected');
         console.log('[Agent] Conectado correctamente');
-        
-      } catch (e) { 
+
+      } catch (e) {
         console.error('[Agent] Error de conexión:', e);
-        setAgentStatus('disconnected'); 
+        setAgentStatus('disconnected');
       }
     };
-    
+
     initAgent();
   }, []);
 
@@ -159,7 +168,8 @@ export default function Home() {
     if (!query || agentStatus !== 'connected') return;
 
     isFirstMessageRef.current = false;
-    lastContentRef.current = ''; // ✅ NUEVO: Resetear al hacer nueva búsqueda
+    lastContentRef.current = '';
+    receivedToolTextRef.current = false; // ✅ Resetear para la nueva consulta
 
     let processedQuery = query;
 
@@ -170,21 +180,21 @@ export default function Home() {
         'television': 'Háblame de la programación de televisión',
         'radio': 'Háblame de la programación de radio'
       };
-      
+
       processedQuery = categoryQueries[query.toLowerCase()] || query;
     }
 
     setMessages(prev => [...prev, { role: 'user', content: processedQuery }]);
     setHasSearched(true);
     setIsStreaming(true);
-    
-    setMessages(prev => [...prev, { 
-      role: 'assistant', 
-      content: 'Consultando...', 
+
+    setMessages(prev => [...prev, {
+      role: 'assistant',
+      content: 'Consultando...',
       isStreaming: true,
       timestamp: Date.now()
     }]);
-    
+
     console.log('[User] Enviando query:', processedQuery);
     await conversationRef.current.sendUserMessage(processedQuery);
   };
@@ -196,7 +206,7 @@ export default function Home() {
         {!hasSearched ? (
           <div className="max-w-4xl mx-auto flex flex-col items-center pt-12 px-6">
             <SearchHero />
-            
+
             <div className="mb-4 h-6">
               {agentStatus === 'connected' && (
                 <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-100">
@@ -214,7 +224,7 @@ export default function Home() {
                 </span>
               )}
             </div>
-            
+
             <QuestionMarquee onQuestionClick={handleSearch} />
             <TopicSelector onSelect={(topic) => handleSearch(topic, true)} className="mt-8" />
             <div className="w-full mt-10"><SearchInput onSearch={handleSearch} /></div>
@@ -224,11 +234,11 @@ export default function Home() {
             {messages.map((msg, i) => (
               <div key={`msg-${i}-${msg.timestamp || i}`} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={msg.role === 'user' ? "bg-blue-600 text-white p-4 rounded-2xl rounded-tr-none shadow-md max-w-[80%]" : "w-full"}>
-                  <ResultsStream 
+                  <ResultsStream
                     key={`stream-${i}-${msg.timestamp || i}`}
-                    isStreaming={!!msg.isStreaming} 
-                    results={msg.results} 
-                    text={msg.content || ""} 
+                    isStreaming={!!msg.isStreaming}
+                    results={msg.results}
+                    text={msg.content || ""}
                   />
                 </div>
               </div>
