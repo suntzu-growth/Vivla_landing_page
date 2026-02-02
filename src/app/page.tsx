@@ -132,35 +132,34 @@ export default function Home() {
             const text = message.message || message.text || '';
             if (!text) return;
 
-            if (isFirstMessageRef.current &&
-              text === "¡Hola! Soy el asistente de EITB. Por ahora puedo ayudarte con las últimas noticias de actualidad del País Vasco. ¿Qué te gustaría saber?") {
-              console.log('[Agent] Mensaje de bienvenida filtrado');
+            // 1. Filtro de bienvenida (ya lo tienes)
+            if (isFirstMessageRef.current && text.includes("¡Hola! Soy el asistente")) {
               isFirstMessageRef.current = false;
               return;
             }
 
-            if (isFirstMessageRef.current) {
-              isFirstMessageRef.current = false;
+            // 2. EL CAMBIO CLAVE:
+            // Si ElevenLabs nos obliga a usar "Auto", enviará texto por el rol 'agent'.
+            // Si ya detectamos que se va a usar una herramienta o ya se usó, 
+            // bloqueamos el streaming de este turno para que no se pegue al final.
+            if (receivedToolTextRef.current && message.role === 'agent') {
+              console.log('[Agent] Bloqueando duplicado de streaming (Auto pre-speech)');
+              return; 
             }
 
-            // ✅ NUEVO: Si ya recibimos el texto de una herramienta, ignorar cualquier streaming posterior
-            // Esto soluciona la duplicación en el router ("Hola")
-            if (receivedToolTextRef.current) {
-              console.log('[Agent] Ignorando streaming porque el texto ya fue provisto por herramienta');
-              return;
-            }
-
+            // 3. Mantenemos tu filtro de seguridad por tiempo
             const timeSinceLastTool = Date.now() - lastToolCallTimestamp.current;
-            if (timeSinceLastTool < 2000) {
-              console.log('[Agent] Ignorando streaming duplicado (recién vino de client tool)');
-              return;
-            }
+            if (timeSinceLastTool < 2000) return;
 
+            // 4. Solo si pasa los filtros anteriores, actualizamos el mensaje
             if (message.role === 'agent' || message.type === 'text') {
               setMessages(prev => {
                 const updated = [...prev];
                 const lastIdx = updated.findLastIndex(m => m.role === 'assistant');
                 if (lastIdx !== -1) {
+                  // Evitar que el streaming repita algo que ya está en el contenido
+                  if (updated[lastIdx].content.includes(text.trim())) return prev;
+
                   const baseContent = updated[lastIdx].content === 'Consultando...' ? '' : updated[lastIdx].content;
                   updated[lastIdx] = {
                     ...updated[lastIdx],
@@ -190,9 +189,10 @@ export default function Home() {
   const handleSearch = async (query: string, isCategorySelection: boolean = false) => {
     if (!query || agentStatus !== 'connected') return;
 
-    isFirstMessageRef.current = false;
+    // RESETEAR AQUÍ
+    receivedToolTextRef.current = false; 
     lastContentRef.current = '';
-    receivedToolTextRef.current = false; // ✅ Resetear para la nueva consulta
+    isFirstMessageRef.current = false;
 
     let processedQuery = query;
 
