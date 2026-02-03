@@ -3,8 +3,8 @@
 import { cn } from "@/lib/utils";
 
 const TOPICS = [
-    { id: "noticias", label: "📰 Noticias", query: "noticias", disabled: false },
-    { id: "deportes", label: "⚽ Deportes", query: "deportes", disabled: false }, // ✅ HABILITADO
+    { id: "noticias", label: "Menorca", query: "Menorca", disabled: false },
+    { id: "deportes", label: "Cantabria", query: "Cantabria", disabled: false }, // ✅ HABILITADO
     { id: "television", label: "📺 Television", query: "television", disabled: true },
     { id: "radio", label: "📻 Radio", query: "radio", disabled: true },
 ];
