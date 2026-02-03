@@ -24,8 +24,8 @@ export async function GET(request: NextRequest) {
                 path.join(dataDir, 'noticias-completas.json'),
                 JSON.stringify(result, null, 2)
             );
-        } catch (e) {
-            console.warn('[daily-scraping] No se pudo guardar en disco:', e.message);
+        } catch (e: any) {
+            console.warn('[daily-scraping] No se pudo guardar en disco:', e?.message ?? String(e));
         }
 
         return NextResponse.json({
