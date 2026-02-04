@@ -115,7 +115,7 @@ export default function Home() {
                   images = [...p.images];
                 } else if (typeof p.images === 'string') {
                   // If it's a string, try to split it by typical patterns (-, whitespace, or https://)
-                  images = p.images.split(/[-\s]+(?=https:\/\/)/).filter(url => url.startsWith('http')).map(url => url.trim());
+                  images = p.images.split(/[-\s]+(?=https:\/\/)/).filter((url: string) => url.startsWith('http')).map((url: string) => url.trim());
                 }
 
                 // 2. Fallback to image field or individual image1/2/3 fields
@@ -123,7 +123,7 @@ export default function Home() {
                 fallbackImages.forEach(img => {
                   // If the single string contains multiple URLs, split them
                   if (img.includes('https://') && (img.includes(' - ') || img.includes('- https://') || img.split('https://').length > 2)) {
-                    const parts = img.split(/(?=https:\/\/)/).map(s => s.replace(/^-/, '').trim()).filter(s => s.startsWith('http'));
+                    const parts = img.split(/(?=https:\/\/)/).map((s: string) => s.replace(/^-/, '').trim()).filter((s: string) => s.startsWith('http'));
                     images.push(...parts);
                   } else {
                     images.push(img);
