@@ -114,39 +114,42 @@ export function ResultsStream({ isStreaming, results, text }: any) {
               rel="noopener noreferrer"
               className="flex flex-col md:flex-row bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-all group"
             >
-              {/* Galería de Imágenes (hasta 3) */}
+              {/* Galería de Imágenes Premium (hasta 3) */}
               {(item.images && item.images.length > 0) ? (
-                <div className="md:w-64 flex-shrink-0 bg-gray-100 flex flex-col gap-1 p-1">
-                  <div className="flex-1 h-32 overflow-hidden rounded-lg">
+                <div className="md:w-72 flex-shrink-0 flex flex-col gap-1.5 p-1.5">
+                  {/* Imagen Principal */}
+                  <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-gray-50 shadow-sm border border-gray-100">
                     <img
                       src={item.images[0]}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                      alt={`${item.title} - Principal`}
-                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
+                      alt={item.title}
+                      loading="lazy"
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
                   </div>
+
+                  {/* Miniaturas */}
                   {item.images.length > 1 && (
-                    <div className="flex gap-1 h-12">
-                      {item.images.slice(1, 3).map((imgUrl: string, i: number) => (
-                        <div key={i} className="flex-1 overflow-hidden rounded-md">
+                    <div className="flex gap-1.5 h-16 w-full">
+                      {item.images.slice(1, 4).map((imgUrl: string, i: number) => (
+                        <div key={i} className="flex-1 relative overflow-hidden rounded-lg bg-gray-50 border border-gray-100 group/thumb">
                           <img
                             src={imgUrl}
-                            className="w-full h-full object-cover hover:opacity-80 transition-opacity cursor-pointer"
-                            alt={`${item.title} - Miniatura ${i + 1}`}
-                            onError={(e) => { e.currentTarget.parentElement!.style.display = 'none'; }}
+                            className="w-full h-full object-cover transition-opacity duration-300 group-hover/thumb:opacity-90"
+                            alt={`${item.title} ${i + 2}`}
                           />
+                          <div className="absolute inset-0 ring-1 ring-inset ring-black/5" />
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
               ) : item.image ? (
-                <div className="md:w-48 h-32 flex-shrink-0 bg-gray-100">
+                <div className="md:w-48 h-full min-h-[160px] flex-shrink-0 overflow-hidden bg-gray-50 p-1.5">
                   <img
                     src={item.image}
-                    className="w-full h-full object-cover"
-                    alt={item.title || 'Propiedad'}
-                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    className="w-full h-full object-cover rounded-xl shadow-sm border border-gray-100"
+                    alt={item.title}
                   />
                 </div>
               ) : null}
