@@ -170,6 +170,7 @@ export default function Home() {
             }
           },
           onMessage: (message: any) => {
+            console.log('[DEBUG] ElevenLabs Event:', message);
             const text = message.message || message.text || '';
             if (!text) return;
 
@@ -260,6 +261,14 @@ export default function Home() {
     }]);
 
     console.log('[User] Enviando query:', processedQuery);
+    setMessages(prev => {
+      const updated = [...prev];
+      const lastIdx = updated.findLastIndex(m => m.role === 'assistant');
+      if (lastIdx !== -1) {
+        updated[lastIdx].content = '🔍 Buscando en Vivla...';
+      }
+      return updated;
+    });
     await conversationRef.current.sendUserMessage(processedQuery);
   };
 
