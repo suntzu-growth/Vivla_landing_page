@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-vivla-red: #e63946;
+  --color-vivla-orange: #e38e41;
   --font-sans: var(--font-inter);
   --font-serif: var(--font-merriweather);
   --color-background: var(--background);
@@ -79,7 +79,7 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
+  --background: #f1f1e5;
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);

@@ -1,16 +1,13 @@
 import type { Metadata } from "next";
-import { Inter, Merriweather } from "next/font/google";
+import { Lora } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+// Lora font (elegant serif similar to Teodor)
+const lora = Lora({
+  variable: "--font-lora",
   subsets: ["latin"],
-});
-
-const merriweather = Merriweather({
-  variable: "--font-merriweather",
-  weight: ["300", "400", "700", "900"],
-  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -26,7 +23,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${merriweather.variable} antialiased font-sans`}
+        className={`${lora.variable} antialiased`}
+        style={{ fontFamily: 'var(--font-lora), serif' }}
       >
         {children}
       </body>

@@ -108,6 +108,7 @@ export default function Home() {
 
               // Map output to include images array if present
               // [MEGA-PARSER] Aggressive URL collector and surgeon
+              // AHORA TAMBIÉN ACEPTA 'image' (singular) de la versión simplificada
               const mappedResults = propertiesArray.map(p => {
                 // Stringify the whole object to find URLs hidden in any field (images, image, image1, etc.)
                 const rawString = JSON.stringify(p);
@@ -317,7 +318,7 @@ export default function Home() {
           <div className="max-w-3xl mx-auto px-6 pb-40 space-y-10 pt-10 animate-in fade-in duration-500">
             {messages.map((msg, i) => (
               <div key={`msg-${i}-${msg.timestamp || i}`} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={msg.role === 'user' ? "bg-red-600 text-white p-4 rounded-2xl rounded-tr-none shadow-md max-w-[80%]" : "w-full"}>
+                <div className={msg.role === 'user' ? "p-4 rounded-2xl rounded-tr-none shadow-md max-w-[80%] text-white" : "w-full"} style={msg.role === 'user' ? { backgroundColor: '#e38e41' } : {}}>
                   <ResultsStream
                     key={`stream-${i}-${msg.timestamp || i}`}
                     isStreaming={!!msg.isStreaming}
