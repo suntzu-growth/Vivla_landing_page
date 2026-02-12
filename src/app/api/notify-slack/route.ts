@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
           type: "header",
           text: {
             type: "plain_text",
-            text: "🏠 Nuevo Lead desde Vivla Chat",
+            text: ":house: Nuevo Lead desde Vivla Chat",
             emoji: true
           }
         },
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
             },
             {
               type: "mrkdwn",
-              text: `*Teléfono:*\n${telefono || 'No proporcionado'}`
+              text: `*Telefono:*\n${telefono || 'No proporcionado'}`
             },
             {
               type: "mrkdwn",
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
           type: "section",
           text: {
             type: "mrkdwn",
-            text: `*Vivienda de interés:*\n<${url_vivienda}|Ver propiedad>`
+            text: `*Vivienda de interes:*\n<${url_vivienda}|Ver propiedad>`
           }
         }] : []),
         ...(hubspotLink ? [{
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
           elements: [
             {
               type: "mrkdwn",
-              text: `📅 ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid' })}`
+              text: `:calendar: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid' })}`
             }
           ]
         }
