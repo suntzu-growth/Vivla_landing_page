@@ -48,7 +48,9 @@ export async function POST(request: NextRequest) {
     if (urgencia) qualificationProps.urgencia = urgencia;
     if (preocupaciones) qualificationProps.preocupaciones = preocupaciones;
 
-    // Paso 1: Buscar contacto por email
+    // ========================================
+    // PASO 1: BUSCAR O CREAR CONTACTO
+    // ========================================
     const searchResponse = await fetch('https://api.hubapi.com/crm/v3/objects/contacts/search', {
       method: 'POST',
       headers: {
@@ -110,7 +112,9 @@ export async function POST(request: NextRequest) {
       console.log(`[assign-hubspot] Contacto creado: ${contactId}`);
     }
 
-    // Paso 2: Asignar owner y actualizar propiedades de calificacion
+    // ========================================
+    // PASO 2: ASIGNAR OWNER Y ACTUALIZAR CALIFICACIÓN
+    // ========================================
     const updateResponse = await fetch(`https://api.hubapi.com/crm/v3/objects/contacts/${contactId}`, {
       method: 'PATCH',
       headers: {
@@ -130,14 +134,7 @@ export async function POST(request: NextRequest) {
 
     const updateResult = await updateResponse.json();
 
-    if (updateResponse.ok) {
-      console.log(`[assign-hubspot] Lead asignado y actualizado: ${contactId}`);
-      return NextResponse.json({
-        success: true,
-        message: 'Lead creado/actualizado y asignado en HubSpot',
-        contactId
-      });
-    } else {
+    if (!updateResponse.ok) {
       console.error('[assign-hubspot] Error actualizando contacto:', updateResult);
       return NextResponse.json({
         success: false,
@@ -145,6 +142,103 @@ export async function POST(request: NextRequest) {
         details: updateResult
       }, { status: updateResponse.status });
     }
+
+    console.log(`[assign-hubspot] Contacto actualizado y asignado: ${contactId}`);
+
+    // ========================================
+    // PASO 3: CREAR TICKET 🎯 (siguiendo docs de ElevenLabs)
+    // ========================================
+    const ticketSubject = `Nuevo Lead: ${vivienda_elegida || 'Propiedad'} - ${nombre || email}`;
+    
+    // Construir el contenido del ticket con toda la info de calificación
+    const ticketContent = `
+📋 INFORMACIÓN DEL LEAD
+━━━━━━━━━━━━━━━━━━━━━━
+👤 Nombre: ${nombre || 'N/A'}
+📧 Email: ${email}
+📱 Teléfono: ${telefono || 'N/A'}
+
+🏠 PREFERENCIAS
+━━━━━━━━━━━━━━━━━━━━━━
+📍 Destino: ${destino_preferido || 'N/A'}
+🏡 Vivienda de interés: ${vivienda_elegida || 'N/A'}
+💰 Presupuesto: ${presupuesto || 'No especificado'}
+🏦 Financiación: ${financiacion || 'No especificado'}
+⏰ Urgencia: ${urgencia || 'No especificado'}
+
+📝 NOTAS DEL AGENTE
+━━━━━━━━━━━━━━━━━━━━━━
+${preocupaciones || 'Sin notas adicionales'}
+    `.trim();
+
+    // Determinar prioridad según urgencia
+    let priority = 'MEDIUM';
+    if (urgencia?.toLowerCase().includes('inmediata')) {
+      priority = 'HIGH';
+    } else if (urgencia?.toLowerCase().includes('explorando')) {
+      priority = 'LOW';
+    }
+    
+    const ticketResponse = await fetch('https://api.hubapi.com/crm/v3/objects/tickets', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${hubspotToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        properties: {
+          subject: ticketSubject,
+          content: ticketContent,
+          hs_pipeline: '0', // Pipeline por defecto
+          hs_pipeline_stage: '1', // Stage inicial
+          hs_ticket_priority: priority,
+          hubspot_owner_id: ownerId // Asignar el ticket al mismo owner
+        },
+        associations: [
+          {
+            to: { id: contactId },
+            types: [
+              {
+                associationCategory: 'HUBSPOT_DEFINED',
+                associationTypeId: 16 // Ticket to Contact
+              }
+            ]
+          }
+        ]
+      })
+    });
+
+    const ticketResult = await ticketResponse.json();
+
+    if (!ticketResponse.ok) {
+      console.error('[assign-hubspot] Error creando ticket:', ticketResult);
+      // No fallar todo el proceso, pero registrar el error
+      console.warn('[assign-hubspot] ⚠️ Contacto creado pero ticket falló');
+      
+      return NextResponse.json({
+        success: true,
+        message: 'Lead creado/actualizado pero hubo un error creando el ticket',
+        contactId,
+        ticketId: null,
+        warning: 'Ticket creation failed'
+      });
+    }
+
+    console.log(`[assign-hubspot] ✅ Ticket creado: ${ticketResult.id}`);
+
+    console.log('\n' + '='.repeat(50));
+    console.log('[assign-hubspot] ✅ PROCESO COMPLETADO EXITOSAMENTE');
+    console.log(`Contacto ID: ${contactId}`);
+    console.log(`Ticket ID: ${ticketResult.id}`);
+    console.log(`Prioridad: ${priority}`);
+    console.log('='.repeat(50) + '\n');
+
+    return NextResponse.json({
+      success: true,
+      message: 'Lead creado/actualizado y asignado en HubSpot',
+      contactId,
+      ticketId: ticketResult.id
+    });
 
   } catch (error: any) {
     console.error('[assign-hubspot] Error:', error.message);
