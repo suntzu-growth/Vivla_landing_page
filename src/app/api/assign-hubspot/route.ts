@@ -17,26 +17,74 @@ export async function POST(request: NextRequest) {
     }
 
     const hubspotToken = process.env.HUBSPOT_API_TOKEN;
-    const ownerId = process.env.HUBSPOT_OWNER_ID;
 
-    if (!hubspotToken || !ownerId) {
-      console.error('[assign-hubspot] Missing environment variables');
+    // Owner IDs configurados
+    const OWNER_DEPORTES = process.env.HUBSPOT_OWNER_DEPORTES || '30953137'; // Daniel Hernández
+    const OWNER_PLAYA = process.env.HUBSPOT_OWNER_PLAYA || '30586602'; // Matías Alucema
+    const OWNER_MONTANA = process.env.HUBSPOT_OWNER_MONTANA || '29470097'; // Oscar Cordero
+    const OWNER_DEFAULT = process.env.HUBSPOT_OWNER_DEFAULT || '32165115'; // Suntzu Tech
+
+    if (!hubspotToken) {
+      console.error('[assign-hubspot] Missing HUBSPOT_API_TOKEN');
       return NextResponse.json({
         success: false,
         error: 'HubSpot configuration incomplete'
       }, { status: 500 });
     }
 
+    // ========================================
+    // ASIGNACIÓN INTELIGENTE DE PROPIETARIO
+    // ========================================
+    const assignSmartOwner = (destino: string = '', vivienda: string = '', preocupaciones: string = ''): string => {
+      const textoCombinado = `${destino} ${vivienda} ${preocupaciones}`.toLowerCase();
+
+      // 1. DEPORTES (Daniel Hernández)
+      const deportesKeywords = ['golf', 'tenis', 'paddle', 'padel', 'gimnasio', 'deporte', 'deportivo', 'deportes', 'activo', 'fitness'];
+      if (deportesKeywords.some(keyword => textoCombinado.includes(keyword))) {
+        console.log(`[assign-hubspot] 🎯 Match DEPORTES detectado → Daniel Hernández (${OWNER_DEPORTES})`);
+        return OWNER_DEPORTES;
+      }
+
+      // 2. PLAYA/COSTA (Matías Alucema)
+      const playaKeywords = ['playa', 'costa', 'mar', 'mediterráneo', 'mediterraneo', 'vistas al mar', 'primera línea', 'primera linea', 'paseo marítimo', 'paseo maritimo'];
+      if (playaKeywords.some(keyword => textoCombinado.includes(keyword))) {
+        console.log(`[assign-hubspot] 🏖️ Match PLAYA detectado → Matías Alucema (${OWNER_PLAYA})`);
+        return OWNER_PLAYA;
+      }
+
+      // 3. MONTAÑA/NATURALEZA (Oscar Cordero)
+      const montanaKeywords = ['montaña', 'montana', 'sierra', 'naturaleza', 'tranquilidad', 'rural', 'campo', 'senderismo', 'esquí', 'esqui', 'ski', 'nieve'];
+      if (montanaKeywords.some(keyword => textoCombinado.includes(keyword))) {
+        console.log(`[assign-hubspot] ⛰️ Match MONTAÑA detectado → Oscar Cordero (${OWNER_MONTANA})`);
+        return OWNER_MONTANA;
+      }
+
+      // 4. DEFAULT (Suntzu Tech) - Lujo, Relax, Familiar, Social
+      console.log(`[assign-hubspot] 🏠 Sin match específico → Suntzu Tech (DEFAULT: ${OWNER_DEFAULT})`);
+      return OWNER_DEFAULT;
+    };
+
+    const ownerId = assignSmartOwner(destino_preferido, vivienda_elegida, preocupaciones);
+
     const nameParts = (nombre || '').split(' ');
     const firstName = nameParts[0] || '';
     const lastName = nameParts.slice(1).join(' ') || '';
+
+    // Identificar nombre del owner asignado
+    const ownerNames: Record<string, string> = {
+      [OWNER_DEPORTES]: 'Daniel Hernández (Deportes)',
+      [OWNER_PLAYA]: 'Matías Alucema (Playa/Costa)',
+      [OWNER_MONTANA]: 'Oscar Cordero (Montaña/Naturaleza)',
+      [OWNER_DEFAULT]: 'Suntzu Tech (Default/Lujo/Relax)'
+    };
+    const ownerName = ownerNames[ownerId] || `Unknown (${ownerId})`;
 
     console.log('\n' + '='.repeat(50));
     console.log('[assign-hubspot] CREANDO/ASIGNANDO LEAD EN HUBSPOT');
     console.log('------------------------------------------');
     console.log(`Lead: ${nombre || 'N/A'} | Email: ${email} | Tel: ${telefono || 'N/A'}`);
     console.log(`Destino: ${destino_preferido || 'N/A'} | Vivienda: ${vivienda_elegida || 'N/A'}`);
-    console.log(`Owner ID: ${ownerId}`);
+    console.log(`Owner asignado: ${ownerName}`);
     console.log('='.repeat(50) + '\n');
 
     // Propiedades de calificacion
