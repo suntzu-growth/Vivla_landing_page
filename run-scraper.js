@@ -17,7 +17,7 @@ async function runScraper() {
     // --- VIVLA.COM ---
     console.log('\n========== SCRAPING VIVLA.COM ==========');
     try {
-        const suntzuUrl = 'https://www.suntzu.com/es/listings';
+        const suntzuUrl = 'https://www.vivla.com/es/listings';
         const response = await fetch(suntzuUrl, {
             headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' }
         });
@@ -33,7 +33,7 @@ async function runScraper() {
             for (let i = 0; i < listingLinks.length; i++) {
                 const $link = $(listingLinks[i]);
                 const href = $link.attr('href');
-                const fullUrl = href.startsWith('http') ? href : `https://www.suntzu.com${href}`;
+                const fullUrl = href.startsWith('http') ? href : `https://www.vivla.com${href}`;
 
                 const $container = $link.closest('.ci-homes');
                 const title = $container.find('h2').first().text().trim() || 'Casa SunTzu';
