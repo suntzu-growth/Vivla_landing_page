@@ -302,16 +302,18 @@ export default function Home() {
             {messages.map((msg, i) => (
               <div key={`msg-${i}-${msg.timestamp || i}`} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div
-                  className={msg.role === 'user' ? "p-4 rounded-2xl rounded-tr-none shadow-md max-w-[80%] text-white" : "w-full"}
+                  className={msg.role === 'user' ? "p-4 rounded-2xl rounded-tr-none shadow-md max-w-[80%]" : "w-full"}
                   style={msg.role === 'user' ? {
                     backgroundColor: '#000000',
+                    color: '#ffffff',
                     fontFamily: '"Host Grotesk", sans-serif',
                     fontWeight: 300,
                     letterSpacing: '-0.01em'
                   } : {
                     fontFamily: '"Host Grotesk", sans-serif',
                     fontWeight: 300,
-                    letterSpacing: '-0.01em'
+                    letterSpacing: '-0.01em',
+                    color: 'rgb(17, 89, 122)'
                   }}
                 >
                   <ResultsStream

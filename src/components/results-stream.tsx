@@ -92,7 +92,7 @@ export function ResultsStream({ isStreaming, results, text }: any) {
     <div className="w-full max-w-3xl mx-auto space-y-6 animate-in fade-in duration-500">
       {/* Texto con soporte para Markdown */}
       <div
-        className="text-inherit text-lg leading-relaxed"
+        className="text-lg leading-relaxed"
         dangerouslySetInnerHTML={{ __html: htmlContent }}
         style={{
           whiteSpace: 'pre-wrap',
@@ -100,7 +100,7 @@ export function ResultsStream({ isStreaming, results, text }: any) {
           fontWeight: 300,
           letterSpacing: '-0.01em',
           lineHeight: '120%',
-          color: 'rgb(17, 89, 122)'
+          color: 'inherit'
         }}
       />
 
