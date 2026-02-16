@@ -17,8 +17,8 @@ async function runScraper() {
     // --- VIVLA.COM ---
     console.log('\n========== SCRAPING VIVLA.COM ==========');
     try {
-        const vivlaUrl = 'https://www.vivla.com/es/listings';
-        const response = await fetch(vivlaUrl, {
+        const suntzuUrl = 'https://www.suntzu.com/es/listings';
+        const response = await fetch(suntzuUrl, {
             headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' }
         });
 
@@ -27,16 +27,16 @@ async function runScraper() {
             const $ = cheerio.load(html);
 
             const listingLinks = $('a').filter((_, el) => $(el).text().trim().toLowerCase() === 'ver casa').get();
-            console.log(`[Vivla] Encontrados ${listingLinks.length} listados. Iniciando extracción...`);
+            console.log(`[SunTzu] Encontrados ${listingLinks.length} listados. Iniciando extracción...`);
 
-            const vivlaArticles = [];
+            const suntzuArticles = [];
             for (let i = 0; i < listingLinks.length; i++) {
                 const $link = $(listingLinks[i]);
                 const href = $link.attr('href');
-                const fullUrl = href.startsWith('http') ? href : `https://www.vivla.com${href}`;
+                const fullUrl = href.startsWith('http') ? href : `https://www.suntzu.com${href}`;
 
                 const $container = $link.closest('.ci-homes');
-                const title = $container.find('h2').first().text().trim() || 'Casa Vivla';
+                const title = $container.find('h2').first().text().trim() || 'Casa SunTzu';
                 const price = $container.find('h6').first().text().trim();
 
                 const specs = $container.find('h4, h5').map((_, el) => $(el).text().trim()).get();
@@ -56,7 +56,7 @@ async function runScraper() {
 
                 const art = {
                     id: Buffer.from(fullUrl).toString('base64').substring(0, 10),
-                    source: 'vivla',
+                    source: 'suntzu',
                     title,
                     url: fullUrl,
                     category: 'inmobiliaria',
@@ -86,20 +86,20 @@ async function runScraper() {
                     }
                     await new Promise(r => setTimeout(r, 100));
                 } catch (e) { }
-                vivlaArticles.push(art);
+                suntzuArticles.push(art);
             }
-            console.log('\n✅ Vivla completado.');
-            allArticles = [...allArticles, ...vivlaArticles];
+            console.log('\n✅ SunTzu completado.');
+            allArticles = [...allArticles, ...suntzuArticles];
         }
     } catch (e) {
-        console.error(`Error en Vivla: ${e.message}`);
+        console.error(`Error en SunTzu: ${e.message}`);
     }
 
     const result = {
         timestamp,
         totalArticles: allArticles.length,
         sources: {
-            vivla: allArticles.length
+            suntzu: allArticles.length
         },
         articles: allArticles
     };

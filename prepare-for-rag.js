@@ -34,7 +34,7 @@ async function prepareForRag() {
                 title: a.title,
                 category: a.category,
                 date: a.publishDate || a.scrapedAt,
-                author: 'Vivla'
+                author: 'SunTzu'
             }
         };
     });
