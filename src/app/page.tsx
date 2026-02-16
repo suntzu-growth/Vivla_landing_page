@@ -305,11 +305,13 @@ export default function Home() {
                   className={msg.role === 'user' ? "p-4 rounded-2xl rounded-tr-none shadow-md max-w-[80%] text-white" : "w-full"}
                   style={msg.role === 'user' ? {
                     backgroundColor: '#000000',
-                    fontFamily: '"Inter", sans-serif',
-                    fontWeight: 400
+                    fontFamily: '"Host Grotesk", sans-serif',
+                    fontWeight: 300,
+                    letterSpacing: '-0.01em'
                   } : {
-                    fontFamily: '"Inter", sans-serif',
-                    fontWeight: 300
+                    fontFamily: '"Host Grotesk", sans-serif',
+                    fontWeight: 300,
+                    letterSpacing: '-0.01em'
                   }}
                 >
                   <ResultsStream

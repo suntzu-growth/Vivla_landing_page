@@ -96,8 +96,11 @@ export function ResultsStream({ isStreaming, results, text }: any) {
         dangerouslySetInnerHTML={{ __html: htmlContent }}
         style={{
           whiteSpace: 'pre-wrap',
-          fontFamily: '"Inter", sans-serif',
-          fontWeight: 300
+          fontFamily: '"Host Grotesk", sans-serif',
+          fontWeight: 300,
+          letterSpacing: '-0.01em',
+          lineHeight: '120%',
+          color: 'rgb(17, 89, 122)'
         }}
       />
 
@@ -158,7 +161,7 @@ export function ResultsStream({ isStreaming, results, text }: any) {
                 </div>
               ) : null}
 
-              <div className="p-3 flex-1" style={{ fontFamily: '"Inter", sans-serif' }}>
+              <div className="p-3 flex-1" style={{ fontFamily: '"Host Grotesk", sans-serif', letterSpacing: '-0.01em' }}>
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest" style={{ fontWeight: 600 }}>
                     SUNTZU

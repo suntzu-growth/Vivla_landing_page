@@ -37,6 +37,11 @@ export function SearchInput({ onSearch }: SearchInputProps) {
                     type="text"
                     placeholder="Pregunta algo sobre SunTzu..."
                     className="border-none shadow-none focus-visible:ring-0 text-lg py-6 px-4 bg-transparent flex-1 placeholder:text-gray-400"
+                    style={{
+                        fontFamily: '"Host Grotesk", sans-serif',
+                        fontWeight: 300,
+                        letterSpacing: '-0.01em'
+                    }}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={handleKeyDown}

@@ -23,12 +23,17 @@ export function TopicSelector({ onSelect, className }: TopicSelectorProps) {
                     onClick={() => !topic.disabled && onSelect(topic.query)}
                     disabled={topic.disabled}
                     className={cn(
-                        "px-4 py-2 border rounded-full text-sm font-medium transition-all shadow-sm",
+                        "px-4 py-2 border rounded-full text-sm transition-all shadow-sm",
                         // Estilos para botón habilitado
                         !topic.disabled && "bg-white/80 backdrop-blur-sm border-gray-200 text-gray-700 hover:border-black hover:text-black hover:bg-gray-50 cursor-pointer",
                         // Estilos para botones deshabilitados
                         topic.disabled && "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed opacity-60 grayscale"
                     )}
+                    style={{
+                        fontFamily: '"Host Grotesk", sans-serif',
+                        fontWeight: 300,
+                        letterSpacing: '-0.01em'
+                    }}
                 >
                     {topic.label}
                 </button>

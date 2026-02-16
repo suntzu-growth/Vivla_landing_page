@@ -82,7 +82,7 @@ export function Header({ conversationId }: { conversationId?: string }) {
                             </div>
                         </div>
 
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2 text-center">
+                        <h2 className="text-2xl text-gray-900 mb-2 text-center" style={{ fontFamily: '"Host Grotesk", sans-serif', fontWeight: 300, letterSpacing: '-0.01em' }}>
                             {isSuccess ? "¡Bienvenido a SunTzu!" : "Personaliza tu experiencia"}
                         </h2>
 
@@ -93,7 +93,7 @@ export function Header({ conversationId }: { conversationId?: string }) {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                                     </svg>
                                 </div>
-                                <p className="text-gray-600 mb-6">
+                                <p className="text-gray-600 mb-6" style={{ fontFamily: '"Host Grotesk", sans-serif', fontWeight: 300, letterSpacing: '-0.01em', color: 'rgb(17, 89, 122)' }}>
                                     Gracias por elegirnos, <strong>{formData.name}</strong>. Tus datos han sido guardados correctamente. Te avisaremos pronto con las mejores oportunidades.
                                 </p>
                                 <button
@@ -105,7 +105,7 @@ export function Header({ conversationId }: { conversationId?: string }) {
                             </div>
                         ) : (
                             <>
-                                <p className="text-gray-600 mb-6 text-center text-sm">
+                                <p className="text-gray-600 mb-6 text-center text-sm" style={{ fontFamily: '"Host Grotesk", sans-serif', fontWeight: 300, letterSpacing: '-0.01em', color: 'rgb(17, 89, 122)' }}>
                                     Déjanos tus datos para ser el primero en disfrutar de las recomendaciones personalizadas y el seguimiento de tus equipos favoritos.
                                 </p>
 
