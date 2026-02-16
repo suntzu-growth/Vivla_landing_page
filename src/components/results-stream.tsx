@@ -109,20 +109,20 @@ export function ResultsStream({ isStreaming, results, text }: any) {
       {/* Tarjetas Visuales (Metadata + Link) */}
       {/* Solo mostrar cuando termine de escribir el texto */}
       {!isTyping && results && results.length > 0 && (
-        <div className="grid gap-4 pt-6 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <div className="grid gap-3 pt-4 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-500">
           {results.map((item: any, idx: number) => (
             <a
               key={idx}
               href={item.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex flex-col md:flex-row bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-all group"
+              className="flex flex-col md:flex-row bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-all group"
             >
               {/* Galería de Imágenes Premium (hasta 3) */}
               {(item.images && item.images.length > 0) ? (
-                <div className="md:w-72 flex-shrink-0 flex flex-col gap-1.5 p-1.5">
+                <div className="md:w-56 flex-shrink-0 flex flex-col gap-1 p-1">
                   {/* Imagen Principal */}
-                  <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-gray-50 shadow-sm border border-gray-100">
+                  <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-gray-50 shadow-sm border border-gray-100">
                     <img
                       src={item.images[0]}
                       className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
@@ -134,7 +134,7 @@ export function ResultsStream({ isStreaming, results, text }: any) {
 
                   {/* Miniaturas */}
                   {item.images.length > 1 && (
-                    <div className="flex gap-1.5 h-16 w-full">
+                    <div className="flex gap-1 h-12 w-full">
                       {item.images.slice(1, 4).map((imgUrl: string, i: number) => (
                         <div key={i} className="flex-1 relative overflow-hidden rounded-lg bg-gray-50 border border-gray-100 group/thumb">
                           <img
@@ -149,16 +149,16 @@ export function ResultsStream({ isStreaming, results, text }: any) {
                   )}
                 </div>
               ) : item.image ? (
-                <div className="md:w-48 h-full min-h-[160px] flex-shrink-0 overflow-hidden bg-gray-50 p-1.5">
+                <div className="md:w-40 h-full min-h-[120px] flex-shrink-0 overflow-hidden bg-gray-50 p-1">
                   <img
                     src={item.image}
-                    className="w-full h-full object-cover rounded-xl shadow-sm border border-gray-100"
+                    className="w-full h-full object-cover rounded-lg shadow-sm border border-gray-100"
                     alt={item.title}
                   />
                 </div>
               ) : null}
 
-              <div className="p-4 flex-1" style={{ fontFamily: '"Inter", sans-serif' }}>
+              <div className="p-3 flex-1" style={{ fontFamily: '"Inter", sans-serif' }}>
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest" style={{ fontWeight: 600 }}>
                     SUNTZU
@@ -169,15 +169,15 @@ export function ResultsStream({ isStreaming, results, text }: any) {
                     </span>
                   )}
                 </div>
-                <h3 className="text-gray-900 group-hover:text-black line-clamp-2 mt-1 transition-colors" style={{ fontWeight: 600, fontSize: '18px' }}>
+                <h3 className="text-gray-900 group-hover:text-black line-clamp-2 mt-1 transition-colors" style={{ fontWeight: 600, fontSize: '16px' }}>
                   {item.title}
                 </h3>
                 {item.summary && (
-                  <p className="text-xs text-gray-500 mt-2 line-clamp-3 leading-relaxed" style={{ fontWeight: 300 }}>
+                  <p className="text-xs text-gray-500 mt-1.5 line-clamp-2 leading-relaxed" style={{ fontWeight: 300 }}>
                     {item.summary}
                   </p>
                 )}
-                <div className="mt-4 flex items-center text-xs text-black group-hover:gap-2 transition-all" style={{ fontWeight: 600 }}>
+                <div className="mt-3 flex items-center text-xs text-black group-hover:gap-2 transition-all" style={{ fontWeight: 600 }}>
                   Ver detalles
                   <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />

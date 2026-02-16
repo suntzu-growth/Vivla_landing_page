@@ -30,7 +30,7 @@ export function QuestionMarquee({ onQuestionClick }: { onQuestionClick?: (questi
                     <div
                         key={i}
                         onClick={() => onQuestionClick?.(q)}
-                        className="flex items-center px-6 py-3 bg-gray-50 rounded-2xl border border-gray-100 shadow-sm text-gray-600 font-medium whitespace-nowrap text-sm md:text-base cursor-pointer hover:bg-white hover:shadow-md hover:text-red-600 transition-all pointer-events-auto active:scale-95"
+                        className="flex items-center px-5 py-2 bg-gray-50 rounded-2xl border border-gray-100 shadow-sm text-gray-600 font-medium whitespace-nowrap text-xs md:text-sm cursor-pointer hover:bg-white hover:shadow-md hover:text-black transition-all pointer-events-auto active:scale-95"
                     >
                         {q}
                     </div>
@@ -43,7 +43,7 @@ export function QuestionMarquee({ onQuestionClick }: { onQuestionClick?: (questi
                     <div
                         key={i}
                         onClick={() => onQuestionClick?.(q)}
-                        className="flex items-center px-6 py-3 bg-gray-50 rounded-2xl border border-gray-100 shadow-sm text-gray-600 font-medium whitespace-nowrap text-sm md:text-base cursor-pointer hover:bg-white hover:shadow-md hover:text-red-600 transition-all pointer-events-auto active:scale-95"
+                        className="flex items-center px-5 py-2 bg-gray-50 rounded-2xl border border-gray-100 shadow-sm text-gray-600 font-medium whitespace-nowrap text-xs md:text-sm cursor-pointer hover:bg-white hover:shadow-md hover:text-black transition-all pointer-events-auto active:scale-95"
                     >
                         {q}
                     </div>

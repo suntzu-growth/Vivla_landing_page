@@ -4,7 +4,7 @@ export function SearchHero() {
             <img
                 src="/suntzu_logo_centro.svg"
                 alt="SunTzu"
-                className="h-16 md:h-20 w-auto"
+                className="h-20 md:h-24 w-auto"
             />
             <p
                 className="text-base md:text-lg max-w-xl mx-auto px-4"
