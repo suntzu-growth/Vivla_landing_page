@@ -298,10 +298,20 @@ export default function Home() {
             <div className="w-full mt-10"><SearchInput onSearch={handleSearch} /></div>
           </div>
         ) : (
-          <div className="max-w-3xl mx-auto px-6 pb-40 space-y-10 pt-10 animate-in fade-in duration-500">
+          <div className="max-w-3xl mx-auto px-6 pb-32 space-y-10 pt-10 animate-in fade-in duration-500">
             {messages.map((msg, i) => (
               <div key={`msg-${i}-${msg.timestamp || i}`} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={msg.role === 'user' ? "p-4 rounded-2xl rounded-tr-none shadow-md max-w-[80%] text-white" : "w-full"} style={msg.role === 'user' ? { backgroundColor: '#e38e41' } : {}}>
+                <div
+                  className={msg.role === 'user' ? "p-4 rounded-2xl rounded-tr-none shadow-md max-w-[80%] text-white" : "w-full"}
+                  style={msg.role === 'user' ? {
+                    backgroundColor: '#000000',
+                    fontFamily: '"Inter", sans-serif',
+                    fontWeight: 400
+                  } : {
+                    fontFamily: '"Inter", sans-serif',
+                    fontWeight: 300
+                  }}
+                >
                   <ResultsStream
                     key={`stream-${i}-${msg.timestamp || i}`}
                     isStreaming={!!msg.isStreaming}
@@ -315,7 +325,7 @@ export default function Home() {
           </div>
         )}
         {hasSearched && (
-          <div className="fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-sm border-t p-6 z-50">
+          <div className="fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-sm border-t p-4 z-50">
             <div className="max-w-3xl mx-auto"><SearchInput onSearch={handleSearch} /></div>
           </div>
         )}

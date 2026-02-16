@@ -92,9 +92,13 @@ export function ResultsStream({ isStreaming, results, text }: any) {
     <div className="w-full max-w-3xl mx-auto space-y-6 animate-in fade-in duration-500">
       {/* Texto con soporte para Markdown */}
       <div
-        className="text-inherit text-lg leading-relaxed font-sans"
+        className="text-inherit text-lg leading-relaxed"
         dangerouslySetInnerHTML={{ __html: htmlContent }}
-        style={{ whiteSpace: 'pre-wrap' }}
+        style={{
+          whiteSpace: 'pre-wrap',
+          fontFamily: '"Inter", sans-serif',
+          fontWeight: 300
+        }}
       />
 
       {/* Cursor parpadeante mientras escribe */}
@@ -154,26 +158,26 @@ export function ResultsStream({ isStreaming, results, text }: any) {
                 </div>
               ) : null}
 
-              <div className="p-4 flex-1">
+              <div className="p-4 flex-1" style={{ fontFamily: '"Inter", sans-serif' }}>
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest">
-                    VIVLA
+                  <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest" style={{ fontWeight: 600 }}>
+                    SUNTZU
                   </span>
                   {item.category && (
-                    <span className="text-[10px] text-gray-400 font-medium">
+                    <span className="text-[10px] text-gray-400" style={{ fontWeight: 400 }}>
                       {item.category}
                     </span>
                   )}
                 </div>
-                <h3 className="font-bold text-gray-900 group-hover:text-red-700 line-clamp-2 mt-1 transition-colors">
+                <h3 className="text-gray-900 group-hover:text-red-700 line-clamp-2 mt-1 transition-colors" style={{ fontWeight: 600, fontSize: '18px' }}>
                   {item.title}
                 </h3>
                 {item.summary && (
-                  <p className="text-xs text-gray-500 mt-2 line-clamp-3 leading-relaxed">
+                  <p className="text-xs text-gray-500 mt-2 line-clamp-3 leading-relaxed" style={{ fontWeight: 300 }}>
                     {item.summary}
                   </p>
                 )}
-                <div className="mt-4 flex items-center text-xs font-semibold text-red-600 group-hover:gap-2 transition-all">
+                <div className="mt-4 flex items-center text-xs text-red-600 group-hover:gap-2 transition-all" style={{ fontWeight: 600 }}>
                   Ver detalles
                   <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
