@@ -169,7 +169,7 @@ export function ResultsStream({ isStreaming, results, text }: any) {
                     </span>
                   )}
                 </div>
-                <h3 className="text-gray-900 group-hover:text-red-700 line-clamp-2 mt-1 transition-colors" style={{ fontWeight: 600, fontSize: '18px' }}>
+                <h3 className="text-gray-900 group-hover:text-black line-clamp-2 mt-1 transition-colors" style={{ fontWeight: 600, fontSize: '18px' }}>
                   {item.title}
                 </h3>
                 {item.summary && (
@@ -177,7 +177,7 @@ export function ResultsStream({ isStreaming, results, text }: any) {
                     {item.summary}
                   </p>
                 )}
-                <div className="mt-4 flex items-center text-xs text-red-600 group-hover:gap-2 transition-all" style={{ fontWeight: 600 }}>
+                <div className="mt-4 flex items-center text-xs text-black group-hover:gap-2 transition-all" style={{ fontWeight: 600 }}>
                   Ver detalles
                   <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />

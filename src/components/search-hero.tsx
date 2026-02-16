@@ -1,13 +1,13 @@
 export function SearchHero() {
     return (
-        <div className="flex flex-col items-center justify-center w-full max-w-3xl mx-auto py-8 md:pb-4 md:pt-12 space-y-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="flex flex-col items-center justify-center w-full max-w-3xl mx-auto py-4 md:pb-2 md:pt-6 space-y-3 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
             <img
                 src="/suntzu_logo_centro.svg"
                 alt="SunTzu"
-                className="h-20 md:h-28 w-auto"
+                className="h-16 md:h-20 w-auto"
             />
             <p
-                className="text-xl md:text-2xl max-w-xl mx-auto px-4"
+                className="text-base md:text-lg max-w-xl mx-auto px-4"
                 style={{
                     fontFamily: '"Inter", "Host Grotesk", sans-serif',
                     fontWeight: 300,
