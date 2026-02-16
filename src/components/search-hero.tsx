@@ -2,7 +2,7 @@ export function SearchHero() {
     return (
         <div className="flex flex-col items-center justify-center w-full max-w-3xl mx-auto py-12 md:pb-8 md:pt-20 space-y-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
             <img
-                src="/suntzu_logo.svg"
+                src="/suntzu_logo_centro.svg"
                 alt="SunTzu"
                 className="h-12 md:h-16 w-auto"
             />
