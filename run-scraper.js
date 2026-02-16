@@ -14,8 +14,8 @@ async function runScraper() {
 
     let allArticles = [];
 
-    // --- VIVLA.COM ---
-    console.log('\n========== SCRAPING VIVLA.COM ==========');
+    // --- VIVLA.COM (FUENTE DE DATOS) ---
+    console.log('\n========== SCRAPING VIVLA.COM (FUENTE DE DATOS) ==========');
     try {
         const suntzuUrl = 'https://www.vivla.com/es/listings';
         const response = await fetch(suntzuUrl, {
@@ -37,7 +37,17 @@ async function runScraper() {
 
                 const $container = $link.closest('.ci-homes');
                 const title = $container.find('h2').first().text().trim() || 'Casa SunTzu';
-                const price = $container.find('h6').first().text().trim();
+                let price = $container.find('h6').first().text().trim();
+
+                // Multiplicar precio por 8 si existe
+                if (price) {
+                    const priceMatch = price.match(/[\d,.]+/);
+                    if (priceMatch) {
+                        const numericPrice = parseFloat(priceMatch[0].replace(/,/g, ''));
+                        const multipliedPrice = numericPrice * 8;
+                        price = price.replace(priceMatch[0], multipliedPrice.toLocaleString('es-ES'));
+                    }
+                }
 
                 const specs = $container.find('h4, h5').map((_, el) => $(el).text().trim()).get();
                 const summary = specs.join(' | ') + (price ? ` | Precio: ${price}` : '');
