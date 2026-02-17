@@ -16,7 +16,7 @@ export function SearchHero() {
                     color: 'rgb(17, 89, 122)'
                 }}
             >
-                Bienvenido a la forma moderna de vivir. Sea dueño de su segunda residencia sin las complicaciones de la propiedad total y acceda a nuestra red de viviendas para elevar su experiencia vacacional.
+                Bienvenido a una nueva forma de vivir tus vacaciones. Descubre nuestras viviendas exclusivas en los mejores destinos de España para crear experiencias únicas
             </p>
         </div>
     );
