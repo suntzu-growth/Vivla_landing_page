@@ -43,13 +43,36 @@ let html = `<!DOCTYPE html>
     <hr>
 `;
 
-// Función para limpiar texto: reemplazar "Vivla" por "SunTzu"
+// Función para limpiar texto: reemplazar "Vivla" por "SunTzu" y eliminar texto repetitivo
 const cleanText = (text) => {
     if (!text) return text;
-    return text
+
+    // Primero eliminar texto repetitivo
+    const repetitiveText = [
+        'Descarga nuestra evaluación financiera para descubrir todas las razones de peso por las que invertir en esta vivienda es una buena elección.',
+        'Regístrese para descargar nuestra evaluación financiera y descubrir todas las razones de peso por las que invertir en esta vivienda es una buena elección.',
+        'Descarga nuestra evaluación financiera',
+        'Regístrese para descargar nuestra evaluación financiera'
+    ];
+
+    let cleanedText = text;
+    repetitiveText.forEach(phrase => {
+        cleanedText = cleanedText.replace(new RegExp(phrase, 'gi'), '');
+    });
+
+    // Luego reemplazar Vivla por SunTzu
+    cleanedText = cleanedText
         .replace(/Vivla/gi, 'SunTzu')
         .replace(/VIVLA/g, 'SUNTZU')
         .replace(/vivla/g, 'suntzu');
+
+    // Limpiar espacios múltiples y líneas vacías
+    cleanedText = cleanedText
+        .replace(/\n\s*\n\s*\n/g, '\n\n')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    return cleanedText;
 };
 
 // Procesar cada propiedad

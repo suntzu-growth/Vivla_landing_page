@@ -2,6 +2,31 @@ const fs = require('fs');
 const path = require('path');
 const cheerio = require('cheerio');
 
+// Función para limpiar texto repetitivo
+function cleanDescription(text) {
+    if (!text) return text;
+
+    // Eliminar el texto repetitivo específico
+    const repetitiveText = [
+        'Descarga nuestra evaluación financiera para descubrir todas las razones de peso por las que invertir en esta vivienda es una buena elección.',
+        'Regístrese para descargar nuestra evaluación financiera y descubrir todas las razones de peso por las que invertir en esta vivienda es una buena elección.',
+        'Descarga nuestra evaluación financiera',
+        'Regístrese para descargar nuestra evaluación financiera'
+    ];
+
+    let cleanedText = text;
+    repetitiveText.forEach(phrase => {
+        cleanedText = cleanedText.replace(new RegExp(phrase, 'gi'), '');
+    });
+
+    // Limpiar espacios múltiples y líneas vacías
+    cleanedText = cleanedText
+        .replace(/\n\s*\n\s*\n/g, '\n\n') // Reducir líneas vacías múltiples
+        .trim();
+
+    return cleanedText;
+}
+
 async function runScraper() {
     console.log('🚀 INICIANDO SCRAPING PROFUNDO REFINADO (FULL EXTRACTION)');
 
@@ -89,6 +114,9 @@ async function runScraper() {
                             .filter(t => t.length > 50)
                             .slice(0, 10)
                             .join('\n\n');
+
+                        // Limpiar texto repetitivo
+                        content = cleanDescription(content);
 
                         art.content = content || summary;
                         art.image = $d('meta[property="og:image"]').attr('content');
