@@ -54,7 +54,7 @@ export function Header({ conversationId }: { conversationId?: string }) {
                     >
                         <div className="relative w-32 h-10">
                             <img
-                                src="/smartup_logo_header.svg"
+                                src="/smartup_logo_header.WEBP"
                                 alt="Suntzu - Volver al inicio"
                                 className="object-contain w-full h-full"
                             />
