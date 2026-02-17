@@ -1,6 +1,6 @@
 export function Footer() {
     return (
-        <footer className="w-full py-6 mt-12 bg-gray-50 border-t border-gray-100">
+        <footer className="w-full py-6 mt-4 bg-gray-50 border-t border-gray-100">
             <div className="container mx-auto px-4 text-center">
                 <div className="flex justify-center space-x-6 mb-4 text-sm text-gray-500">
                     <a href="#" className="hover:text-red-600 transition-colors">Aviso Legal</a>

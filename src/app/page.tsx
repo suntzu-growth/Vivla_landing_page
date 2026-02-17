@@ -276,7 +276,7 @@ export default function Home() {
             <div className="max-w-4xl mx-auto flex flex-col items-center pt-2 px-6">
               <SearchHero />
 
-              <div className="mb-1 h-4">
+              <div className="mt-4 mb-1 h-4">
                 {agentStatus === 'connected' && (
                   <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-100">
                     ● Agente Conectado
@@ -295,13 +295,13 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="mt-6 w-full max-w-4xl mx-auto px-6">
+            <div className="mt-4 w-full max-w-4xl mx-auto px-6">
               <QuestionMarquee onQuestionClick={handleSearch} />
             </div>
 
             <div className="max-w-4xl mx-auto flex flex-col items-center px-6">
               <TopicSelector onSelect={(topic) => handleSearch(topic, true)} className="mt-3" />
-              <div className="w-full mt-5"><SearchInput onSearch={handleSearch} /></div>
+              <div className="w-full mt-3"><SearchInput onSearch={handleSearch} /></div>
             </div>
           </>
         ) : (
