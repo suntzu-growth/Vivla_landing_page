@@ -295,7 +295,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-6 w-full max-w-4xl mx-auto px-6">
               <QuestionMarquee onQuestionClick={handleSearch} />
             </div>
 
