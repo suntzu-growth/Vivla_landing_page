@@ -23,7 +23,7 @@ export function TopicSelector({ onSelect, className }: TopicSelectorProps) {
                     onClick={() => !topic.disabled && onSelect(topic.query)}
                     disabled={topic.disabled}
                     className={cn(
-                        "px-4 py-2 border rounded-full text-sm transition-all shadow-sm",
+                        "px-3 py-1.5 border rounded-full text-xs transition-all shadow-sm",
                         // Estilos para botón habilitado
                         !topic.disabled && "bg-white/80 backdrop-blur-sm border-gray-200 text-gray-700 hover:border-black hover:text-black hover:bg-gray-50 cursor-pointer",
                         // Estilos para botones deshabilitados

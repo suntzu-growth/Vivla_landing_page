@@ -293,9 +293,9 @@ export default function Home() {
               )}
             </div>
 
-            <QuestionMarquee onQuestionClick={handleSearch} />
-            <TopicSelector onSelect={(topic) => handleSearch(topic, true)} className="mt-2" />
-            <div className="w-full mt-4"><SearchInput onSearch={handleSearch} /></div>
+            <div className="mt-6"><QuestionMarquee onQuestionClick={handleSearch} /></div>
+            <TopicSelector onSelect={(topic) => handleSearch(topic, true)} className="mt-3" />
+            <div className="w-full mt-5"><SearchInput onSearch={handleSearch} /></div>
           </div>
         ) : (
           <div className="max-w-3xl mx-auto px-6 pb-32 space-y-10 pt-10 animate-in fade-in duration-500">
