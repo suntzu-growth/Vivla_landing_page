@@ -108,14 +108,41 @@ async function runScraper() {
                     if (detailRes.ok) {
                         const detailHtml = await detailRes.text();
                         const $d = cheerio.load(detailHtml);
-                        let content = $d('p')
-                            .map((_, p) => $d(p).text().trim())
-                            .get()
-                            .filter(t => t.length > 50)
-                            .slice(0, 10)
-                            .join('\n\n');
 
-                        // Limpiar texto repetitivo
+                        // EXTRACCIÓN ESPECÍFICA: Buscar el div de descripción principal
+                        let content = '';
+                        const descriptionDiv = $d('.home-description-paragraph.w-richtext');
+
+                        if (descriptionDiv.length > 0) {
+                            // Extraer TODO el texto del div de descripción
+                            content = descriptionDiv.text().trim();
+                        } else {
+                            // Fallback: extraer párrafos si no encuentra el div específico
+                            content = $d('p')
+                                .map((_, p) => $d(p).text().trim())
+                                .get()
+                                .filter(t => t.length > 30)
+                                .join('\n\n');
+                        }
+
+                        // Textos a ELIMINAR completamente
+                        const textsToRemove = [
+                            /Eres copropietario y accionista.*/gi,
+                            /Puedes comprar y vender fracciones.*/gi,
+                            /En el momento de la firma.*/gi,
+                            /Disfruta de la propiedad mientras.*/gi,
+                            /SunTzu Studio diseña cada casa para reflejar.*/gi,
+                            /con una atención al detalle que convierte.*/gi,
+                            /Descarga nuestra evaluación.*/gi,
+                            /Regístrese para descargar.*/gi
+                        ];
+
+                        // Filtrar textos prohibidos
+                        textsToRemove.forEach(regex => {
+                            content = content.replace(regex, '');
+                        });
+
+                        // Limpiar texto repetitivo adicional
                         content = cleanDescription(content);
 
                         art.content = content || summary;
