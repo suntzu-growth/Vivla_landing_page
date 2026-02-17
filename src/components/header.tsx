@@ -54,8 +54,8 @@ export function Header({ conversationId }: { conversationId?: string }) {
                     >
                         <div className="relative w-32 h-10">
                             <img
-                                src="/smartup_logo_header.WEBP"
-                                alt="Suntzu - Volver al inicio"
+                                src="/smartup_logo_header.webp"
+                                alt="SmartUp - Volver al inicio"
                                 className="object-contain w-full h-full"
                             />
                         </div>
@@ -83,7 +83,7 @@ export function Header({ conversationId }: { conversationId?: string }) {
                         </div>
 
                         <h2 className="text-2xl text-gray-900 mb-2 text-center" style={{ fontFamily: '"Host Grotesk", sans-serif', fontWeight: 300, letterSpacing: '-0.01em' }}>
-                            {isSuccess ? "¡Bienvenido a SunTzu!" : "Personaliza tu experiencia"}
+                            {isSuccess ? "¡Bienvenido a SmartUp!" : "Personaliza tu experiencia"}
                         </h2>
 
                         {isSuccess ? (
@@ -158,7 +158,7 @@ export function Header({ conversationId }: { conversationId?: string }) {
                         )}
 
                         <p className="text-xs text-gray-500 mt-4 text-center">
-                            Gracias por tu interés en SunTzu 🙏
+                            Gracias por tu interés en SmartUp 🙏
                         </p>
                     </div>
                 </div>
