@@ -272,31 +272,38 @@ export default function Home() {
       <Header conversationId={conversationRef.current?.conversationId} />
       <main className="flex-1 pt-16">
         {!hasSearched ? (
-          <div className="max-w-4xl mx-auto flex flex-col items-center pt-2 px-6">
-            <SearchHero />
+          <>
+            <div className="max-w-4xl mx-auto flex flex-col items-center pt-2 px-6">
+              <SearchHero />
 
-            <div className="mb-1 h-4">
-              {agentStatus === 'connected' && (
-                <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-100">
-                  ● Agente Conectado
-                </span>
-              )}
-              {agentStatus === 'connecting' && (
-                <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full border border-amber-100 animate-pulse">
-                  ○ Conectando...
-                </span>
-              )}
-              {agentStatus === 'disconnected' && (
-                <span className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded-full border border-red-100">
-                  ○ Desconectado
-                </span>
-              )}
+              <div className="mb-1 h-4">
+                {agentStatus === 'connected' && (
+                  <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-100">
+                    ● Agente Conectado
+                  </span>
+                )}
+                {agentStatus === 'connecting' && (
+                  <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full border border-amber-100 animate-pulse">
+                    ○ Conectando...
+                  </span>
+                )}
+                {agentStatus === 'disconnected' && (
+                  <span className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded-full border border-red-100">
+                    ○ Desconectado
+                  </span>
+                )}
+              </div>
             </div>
 
-            <div className="mt-6"><QuestionMarquee onQuestionClick={handleSearch} /></div>
-            <TopicSelector onSelect={(topic) => handleSearch(topic, true)} className="mt-3" />
-            <div className="w-full mt-5"><SearchInput onSearch={handleSearch} /></div>
-          </div>
+            <div className="mt-6">
+              <QuestionMarquee onQuestionClick={handleSearch} />
+            </div>
+
+            <div className="max-w-4xl mx-auto flex flex-col items-center px-6">
+              <TopicSelector onSelect={(topic) => handleSearch(topic, true)} className="mt-3" />
+              <div className="w-full mt-5"><SearchInput onSearch={handleSearch} /></div>
+            </div>
+          </>
         ) : (
           <div className="max-w-3xl mx-auto px-6 pb-32 space-y-10 pt-10 animate-in fade-in duration-500">
             {messages.map((msg, i) => (
