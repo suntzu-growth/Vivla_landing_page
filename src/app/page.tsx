@@ -70,26 +70,19 @@ export default function Home() {
 
               const propertiesArray = Array.isArray(properties) ? properties : [properties];
 
-              // Map output to include images array if present
-              // [MEGA-PARSER] Aggressive URL collector and surgeon
-              // AHORA TAMBIÉN ACEPTA 'image' (singular) de la versión simplificada
-              const mappedResults = await Promise.all(propertiesArray.map(async (p) => {
-                // Stringify the whole object to find URLs hidden in any field (images, image, image1, etc.)
+              // PASO 1: Extraer imágenes inline (las que vienen del LLM)
+              const initialResults = propertiesArray.map((p) => {
                 const rawString = JSON.stringify(p);
-
-                // Regex: Broadly find all https links
                 const urlMatches = rawString.match(/https:\/\/[^"'\s\\]+/gi);
 
                 let detectedImages = urlMatches ? urlMatches.map((url: string) => {
-                  // Surgical cleaning: Remove trailing PDF separators or tags
                   return url
-                    .replace(/(Resumen:?|Fuente:?|URL:?|IMÁGENES:?|-$).*$/, '') // Cut off at any tag or trailing hyphen
-                    .replace(/[",\\]+$/, '') // Trim JSON/String leftovers
+                    .replace(/(Resumen:?|Fuente:?|URL:?|IMÁGENES:?|-$).*$/, '')
+                    .replace(/[",\\]+$/, '')
                     .trim();
                 }) : [];
 
-                // Filter: Keep only links that look like images (CDN, common extensions)
-                let finalImages = [...new Set(detectedImages)]
+                const finalImages = [...new Set(detectedImages)]
                   .filter(url => {
                     const low = url.toLowerCase();
                     return low.startsWith('http') &&
@@ -97,36 +90,42 @@ export default function Home() {
                   })
                   .slice(0, 3);
 
-                // 🚀 AUTO-SCRAPE: Si solo hay 1 imagen, scrapeamos la URL de la propiedad para obtener más
-                if (finalImages.length < 3 && p.url) {
+                return { ...p, images: finalImages };
+              });
+
+              // PASO 2: Mostrar tarjetas INMEDIATAMENTE (con o sin imágenes)
+              updateAssistantMessage(null, false, initialResults, true);
+
+              // PASO 3: Auto-scrape en background para propiedades sin imágenes
+              const needsScrape = initialResults.some(p => p.images.length < 3 && p.url);
+              if (needsScrape) {
+                Promise.all(initialResults.map(async (p, idx) => {
+                  if (p.images.length >= 3 || !p.url) return p;
                   try {
-                    console.log(`[Auto-Scrape] Obteniendo imágenes adicionales de ${p.url}`);
+                    console.log(`[Auto-Scrape] Obteniendo imágenes de ${p.url}`);
                     const response = await fetch('/api/scrape-images', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ url: p.url })
                     });
-
                     if (response.ok) {
                       const { images } = await response.json();
                       if (images && images.length > 0) {
-                        // Combinar imágenes: la primera del LLM + las scraped
-                        finalImages = [...finalImages, ...images].slice(0, 3);
-                        console.log(`[Auto-Scrape] ✅ Obtenidas ${images.length} imágenes adicionales`);
+                        const merged = [...p.images, ...images].slice(0, 3);
+                        console.log(`[Auto-Scrape] ✅ ${p.title}: ${merged.length} imágenes`);
+                        return { ...p, images: merged };
                       }
                     }
                   } catch (error) {
-                    console.warn('[Auto-Scrape] Error al obtener imágenes:', error);
+                    console.warn('[Auto-Scrape] Error:', error);
                   }
-                }
+                  return p;
+                })).then(updatedResults => {
+                  // Actualizar las tarjetas con las imágenes scraped
+                  updateAssistantMessage(null, false, updatedResults, true);
+                });
+              }
 
-                return {
-                  ...p,
-                  images: finalImages
-                };
-              }));
-
-              updateAssistantMessage(null, false, mappedResults, true);
               return "Propiedades mostradas visualmente al usuario. No generes texto adicional.";
             },
 
