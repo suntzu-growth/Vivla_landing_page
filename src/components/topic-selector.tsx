@@ -3,10 +3,11 @@
 import { cn } from "@/lib/utils";
 
 const TOPICS = [
-    { id: "noticias", label: "Menorca", query: "Menorca", disabled: false },
-    { id: "deportes", label: "Cantabria", query: "Cantabria", disabled: false },
-    { id: "baqueira", label: "Baqueira", query: "Baqueira", disabled: false },
-    { id: "ibiza", label: "Ibiza", query: "Ibiza", disabled: false },
+    { id: "norte-merida", label: "Norte de Mérida", query: "Norte de Mérida", disabled: false },
+    { id: "costa-esmeralda", label: "Costa Esmeralda", query: "Costa Esmeralda", disabled: false },
+    { id: "campo-golf", label: "Campo de Golf", query: "Campo de Golf", disabled: false },
+    { id: "haciendas", label: "Haciendas", query: "Haciendas", disabled: false },
+    { id: "naturaleza", label: "Naturaleza", query: "Naturaleza", disabled: false },
 ];
 
 interface TopicSelectorProps {

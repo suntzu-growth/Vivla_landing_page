@@ -16,7 +16,7 @@ export function SearchHero() {
                     color: 'rgb(17, 89, 122)'
                 }}
             >
-                Bienvenido a una nueva forma de vivir tus vacaciones. Descubre nuestras viviendas exclusivas en los mejores destinos de Yucatan para crear experiencias únicas
+                Descubre residencias vacacionales exclusivas en Mérida y la costa yucateca, diseñadas para disfrutar, invertir y crear experiencias únicas durante todo el año.
             </p>
         </div>
     );
