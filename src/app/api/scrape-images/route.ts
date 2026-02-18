@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
     try {
         const { url } = await req.json();
 
-        if (!url || !url.includes('vivla.com')) {
+        if (!url || (!url.includes('vivla.com') && !url.includes('realestate-viviendas.vercel.app'))) {
             return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
         }
 
