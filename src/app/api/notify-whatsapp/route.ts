@@ -20,6 +20,13 @@ export async function POST(request: NextRequest) {
     const templateLanguage = process.env.WHATSAPP_TEMPLATE_LANGUAGE || 'es';
     const agentId = process.env.ELEVENLABS_AGENT_ID;
 
+    // DEBUG: Log para ver qué variables faltan
+    console.log('[notify-whatsapp] DEBUG Environment Variables:');
+    console.log('  apiKey:', apiKey ? '✓ SET' : '✗ MISSING');
+    console.log('  phoneNumberId:', phoneNumberId ? '✓ SET' : '✗ MISSING');
+    console.log('  templateName:', templateName ? '✓ SET' : '✗ MISSING');
+    console.log('  agentId:', agentId ? '✓ SET' : '✗ MISSING');
+
     if (!apiKey || !phoneNumberId || !templateName || !agentId) {
       console.error('[notify-whatsapp] Missing environment variables');
       return NextResponse.json({
@@ -43,6 +50,25 @@ export async function POST(request: NextRequest) {
       { text: url_vivienda }
     ];
 
+    // Preparar el payload
+    const payload = {
+      whatsapp_phone_number_id: phoneNumberId,
+      whatsapp_user_id: telefono,
+      template_name: templateName,
+      template_language_code: templateLanguage,
+      template_params: [
+        {
+          type: "body",
+          parameters: templateParameters
+        }
+      ],
+      agent_id: agentId
+    };
+
+    // DEBUG: Mostrar el payload completo
+    console.log('[notify-whatsapp] Payload enviado a ElevenLabs:');
+    console.log(JSON.stringify(payload, null, 2));
+
     // Llamar a ElevenLabs ConvAI WhatsApp API
     const response = await fetch('https://api.elevenlabs.io/v1/convai/whatsapp/outbound-message', {
       method: 'POST',
@@ -50,19 +76,7 @@ export async function POST(request: NextRequest) {
         'xi-api-key': apiKey,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        whatsapp_phone_number_id: phoneNumberId,
-        whatsapp_user_id: telefono,
-        template_name: templateName,
-        template_language_code: templateLanguage,
-        template_params: [
-          {
-            type: "body",
-            parameters: templateParameters
-          }
-        ],
-        agent_id: agentId
-      })
+      body: JSON.stringify(payload)
     });
 
     const result = await response.json();

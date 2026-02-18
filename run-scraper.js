@@ -109,21 +109,45 @@ async function runScraper() {
                         const detailHtml = await detailRes.text();
                         const $d = cheerio.load(detailHtml);
 
-                        // EXTRACCIÓN ESPECÍFICA: Buscar el div de descripción principal
-                        let content = '';
+                        // ===== 1. DESCRIPCIÓN PRINCIPAL =====
+                        let mainDescription = '';
                         const descriptionDiv = $d('.home-description-paragraph.w-richtext');
 
                         if (descriptionDiv.length > 0) {
-                            // Extraer TODO el texto del div de descripción
-                            content = descriptionDiv.text().trim();
+                            mainDescription = descriptionDiv.text().trim();
                         } else {
                             // Fallback: extraer párrafos si no encuentra el div específico
-                            content = $d('p')
+                            mainDescription = $d('p')
                                 .map((_, p) => $d(p).text().trim())
                                 .get()
                                 .filter(t => t.length > 30)
                                 .join('\n\n');
                         }
+
+                        // ===== 2. SECCIÓN "¿QUÉ LO HACE ÚNICO?" =====
+                        let uniqueFeatures = '';
+                        const uniqueSection = $d('article.home-about-others-amenities');
+                        if (uniqueSection.length > 0) {
+                            const amenities = uniqueSection.find('.other-amenities-text')
+                                .map((_, el) => $d(el).text().trim())
+                                .get()
+                                .filter(text => text && text !== '-')
+                                .join(', ');
+
+                            if (amenities) {
+                                uniqueFeatures = `\n\n¿Qué lo hace único?: ${amenities}`;
+                            }
+                        }
+
+                        // ===== 3. SECCIÓN DE UBICACIÓN =====
+                        let locationInfo = '';
+                        const locationText = $d('.location-text-body').text().trim();
+                        if (locationText) {
+                            locationInfo = `\n\nUbicación: ${locationText}`;
+                        }
+
+                        // ===== COMBINAR TODO EL CONTENIDO =====
+                        let fullContent = mainDescription + uniqueFeatures + locationInfo;
 
                         // Textos a ELIMINAR completamente
                         const textsToRemove = [
@@ -139,13 +163,13 @@ async function runScraper() {
 
                         // Filtrar textos prohibidos
                         textsToRemove.forEach(regex => {
-                            content = content.replace(regex, '');
+                            fullContent = fullContent.replace(regex, '');
                         });
 
                         // Limpiar texto repetitivo adicional
-                        content = cleanDescription(content);
+                        fullContent = cleanDescription(fullContent);
 
-                        art.content = content || summary;
+                        art.content = fullContent || summary;
                         art.image = $d('meta[property="og:image"]').attr('content');
                         if (!art.image) art.image = $container.find('img').first().attr('src');
                     }

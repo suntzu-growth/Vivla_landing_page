@@ -16,7 +16,7 @@ export function SearchHero() {
                     color: 'rgb(17, 89, 122)'
                 }}
             >
-                Bienvenido a una nueva forma de vivir tus vacaciones. Descubre nuestras viviendas exclusivas en los mejores destinos de España para crear experiencias únicas
+                Bienvenido a una nueva forma de vivir tus vacaciones. Descubre nuestras viviendas exclusivas en los mejores destinos de Yucatan para crear experiencias únicas
             </p>
         </div>
     );
