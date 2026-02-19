@@ -3,7 +3,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-vivla-orange: #e38e41;
+  --color-brand-orange: #e38e41;
   --font-sans: var(--font-inter);
   --font-serif: var(--font-merriweather);
   --color-background: var(--background);

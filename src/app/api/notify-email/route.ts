@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     const resendApiKey = process.env.RESEND_API_KEY;
-    const emailFrom = process.env.EMAIL_FROM || 'noreply@vivla.com';
+    const emailFrom = process.env.EMAIL_FROM || 'noreply@suntzu-realestate.com';
 
     if (!resendApiKey) {
       console.error('[notify-email] Missing RESEND_API_KEY');

@@ -34,8 +34,8 @@ export default function Home() {
     if (!text) return [];
     const properties: { title: string; url: string; summary: string }[] = [];
 
-    // Patrón: detectar URLs de propiedades de dominios conocidos
-    const urlRegex = /https?:\/\/(?:realestate-viviendas\.vercel\.app|(?:www\.)?vivla\.com)\/[^\s)"\]<>]+/gi;
+    // Patrón: detectar URLs de propiedades del dominio realestate-viviendas.vercel.app
+    const urlRegex = /https?:\/\/realestate-viviendas\.vercel\.app\/[^\s)"\]<>]+/gi;
     const urls = [...new Set(text.match(urlRegex) || [])];
 
     if (urls.length === 0) return [];
