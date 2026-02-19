@@ -19,9 +19,184 @@ export default function Home() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isFirstMessageRef = useRef(true);
   const toolCalledInTurnRef = useRef<boolean>(false);
+  const fallbackCheckRef = useRef<NodeJS.Timeout | null>(null);
+  const streamingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTextUpdateRef = useRef<number>(0);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // ==========================================
+  // FALLBACK: Detectar propiedades en texto cuando el LLM NO llamó al tool
+  // ==========================================
+  const extractPropertiesFromText = (text: string): { title: string; url: string; summary: string }[] => {
+    if (!text) return [];
+    const properties: { title: string; url: string; summary: string }[] = [];
+
+    // Patrón: detectar URLs de propiedades de dominios conocidos
+    const urlRegex = /https?:\/\/(?:realestate-viviendas\.vercel\.app|(?:www\.)?vivla\.com)\/[^\s)"\]<>]+/gi;
+    const urls = [...new Set(text.match(urlRegex) || [])];
+
+    if (urls.length === 0) return [];
+
+    for (const url of urls) {
+      // Limpiar la URL de caracteres trailing
+      const cleanUrl = url.replace(/[.,;:!?)]+$/, '');
+
+      // Intentar extraer el nombre de la propiedad del slug de la URL
+      const slugMatch = cleanUrl.match(/\/propiedad\/([^/?#]+)/i) || cleanUrl.match(/\/property\/([^/?#]+)/i) || cleanUrl.match(/\/([^/?#]+)$/);
+      let title = 'Propiedad';
+      if (slugMatch && slugMatch[1]) {
+        title = decodeURIComponent(slugMatch[1])
+          .replace(/-/g, ' ')
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+      }
+
+      // Intentar encontrar un título mejor en el texto cercano a la URL
+      // Buscar patrones como "**Nombre de Propiedad**" o "1. Nombre de Propiedad"
+      const textBefore = text.substring(0, text.indexOf(url));
+      const lines = textBefore.split('\n');
+      const lastLines = lines.slice(-5).join('\n');
+
+      // Buscar negritas: **Titulo**
+      const boldMatch = lastLines.match(/\*\*([^*]+)\*\*[^*]*$/);
+      if (boldMatch) {
+        title = boldMatch[1].trim();
+      } else {
+        // Buscar numeración: "1. Titulo" o "- Titulo"
+        const numberedMatch = lastLines.match(/(?:\d+\.\s*|[-•]\s*)([^\n:]+?)(?:\s*[-–:]\s*|\s*$)/);
+        if (numberedMatch && numberedMatch[1].length > 3 && numberedMatch[1].length < 100) {
+          title = numberedMatch[1].trim();
+        }
+      }
+
+      // Extraer un resumen: texto entre el título y la URL
+      let summary = '';
+      const titleIdx = text.lastIndexOf(title, text.indexOf(url));
+      if (titleIdx !== -1) {
+        const betweenText = text.substring(titleIdx + title.length, text.indexOf(url)).trim();
+        // Limpiar markdown y limitar longitud
+        summary = betweenText
+          .replace(/\*\*/g, '')
+          .replace(/^\s*[-–:•]\s*/, '')
+          .replace(/\[.*?\]\(.*?\)/g, '')
+          .trim();
+        if (summary.length > 200) summary = summary.substring(0, 200) + '...';
+      }
+
+      properties.push({ title, url: cleanUrl, summary });
+    }
+
+    return properties;
+  };
+
+  const autoGenerateCards = async (properties: { title: string; url: string; summary: string }[]) => {
+    console.log('[Fallback] Auto-generando tarjetas para', properties.length, 'propiedades');
+
+    // Crear resultados iniciales sin imágenes
+    const initialResults = properties.map(p => ({
+      title: p.title,
+      url: p.url,
+      summary: p.summary,
+      images: [] as string[]
+    }));
+
+    // Mostrar tarjetas inmediatamente (sin imágenes)
+    setMessages(prev => {
+      const updated = [...prev];
+      const lastIdx = updated.findLastIndex(m => m.role === 'assistant');
+      if (lastIdx !== -1) {
+        updated[lastIdx] = {
+          ...updated[lastIdx],
+          results: initialResults,
+          isStreaming: false
+        };
+      }
+      return updated;
+    });
+
+    // Scrape imágenes en background
+    const updatedResults = await Promise.all(
+      initialResults.map(async (p) => {
+        if (!p.url) return p;
+        try {
+          console.log(`[Fallback Scrape] Obteniendo imágenes de ${p.url}`);
+          const response = await fetch('/api/scrape-images', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: p.url })
+          });
+          if (response.ok) {
+            const { images } = await response.json();
+            if (images && images.length > 0) {
+              console.log(`[Fallback Scrape] ✅ ${p.title}: ${images.length} imágenes`);
+              return { ...p, images: images.slice(0, 3) };
+            }
+          }
+        } catch (error) {
+          console.warn('[Fallback Scrape] Error:', error);
+        }
+        return p;
+      })
+    );
+
+    // Actualizar con imágenes
+    setMessages(prev => {
+      const updated = [...prev];
+      const lastIdx = updated.findLastIndex(m => m.role === 'assistant');
+      if (lastIdx !== -1) {
+        updated[lastIdx] = {
+          ...updated[lastIdx],
+          results: updatedResults
+        };
+      }
+      return updated;
+    });
+  };
+
+  // Efecto que detecta cuando un turno termina sin tool call pero con propiedades mencionadas
+  useEffect(() => {
+    // Limpiar timeout previo
+    if (fallbackCheckRef.current) {
+      clearTimeout(fallbackCheckRef.current);
+      fallbackCheckRef.current = null;
+    }
+
+    const lastAssistant = [...messages].reverse().find(m => m.role === 'assistant');
+    if (!lastAssistant) return;
+
+    // Solo actuar si NO está streaming Y NO tiene results ya
+    if (lastAssistant.isStreaming || lastAssistant.results) return;
+
+    // Esperar un momento para asegurar que el turno realmente terminó
+    // (el texto podría seguir llegando)
+    fallbackCheckRef.current = setTimeout(() => {
+      // Re-verificar condiciones
+      setMessages(prev => {
+        const lastMsg = [...prev].reverse().find(m => m.role === 'assistant');
+        if (!lastMsg || lastMsg.isStreaming || lastMsg.results) return prev;
+
+        const content = lastMsg.content || '';
+        // Solo si el contenido es sustancial (no "Consultando..." etc.)
+        if (content.length < 100) return prev;
+
+        const detectedProperties = extractPropertiesFromText(content);
+        if (detectedProperties.length > 0) {
+          console.log('[Fallback] ⚡ Detectadas', detectedProperties.length, 'propiedades sin tool call. Auto-generando tarjetas...');
+          // Ejecutar fuera del setState para evitar problemas
+          setTimeout(() => autoGenerateCards(detectedProperties), 0);
+        }
+        return prev;
+      });
+    }, 2000); // 2 segundos de gracia después de que deja de streamear
+
+    return () => {
+      if (fallbackCheckRef.current) {
+        clearTimeout(fallbackCheckRef.current);
+        fallbackCheckRef.current = null;
+      }
+    };
   }, [messages]);
 
   const updateAssistantMessage = (content: string | null, streaming: boolean, results?: any[], fromTool: boolean = false) => {
@@ -169,6 +344,8 @@ export default function Home() {
 
             // 3. Solo si pasa los filtros, actualizar mensaje
             if (message.role === 'agent' || message.type === 'text') {
+              lastTextUpdateRef.current = Date.now();
+
               setMessages(prev => {
                 const updated = [...prev];
                 const lastIdx = updated.findLastIndex(m => m.role === 'assistant');
@@ -195,6 +372,21 @@ export default function Home() {
                 }
                 return updated;
               });
+
+              // Safety net: auto-stop streaming si no llega más texto en 4 segundos
+              if (streamingTimeoutRef.current) clearTimeout(streamingTimeoutRef.current);
+              streamingTimeoutRef.current = setTimeout(() => {
+                setMessages(prev => {
+                  const updated = [...prev];
+                  const lastIdx = updated.findLastIndex(m => m.role === 'assistant');
+                  if (lastIdx !== -1 && updated[lastIdx].isStreaming) {
+                    console.log('[Agent] Streaming auto-stop después de 4s sin texto nuevo');
+                    updated[lastIdx] = { ...updated[lastIdx], isStreaming: false };
+                  }
+                  return updated;
+                });
+                setIsStreaming(false);
+              }, 4000);
             }
           },
           onError: (error: any) => {
@@ -206,6 +398,22 @@ export default function Home() {
           },
           onStatusChange: (status: any) => {
             console.log('[ElevenLabs Status Change]:', status);
+            // Detectar fin de turno del agente para desactivar streaming
+            if (status && (status.status === 'listening' || status === 'listening')) {
+              // El agente terminó de hablar, marcar streaming como false
+              setMessages(prev => {
+                const updated = [...prev];
+                const lastIdx = updated.findLastIndex(m => m.role === 'assistant');
+                if (lastIdx !== -1 && updated[lastIdx].isStreaming) {
+                  updated[lastIdx] = {
+                    ...updated[lastIdx],
+                    isStreaming: false
+                  };
+                }
+                return updated;
+              });
+              setIsStreaming(false);
+            }
           }
         });
 
