@@ -19,8 +19,8 @@ export async function POST(request: NextRequest) {
     const hubspotToken = process.env.HUBSPOT_API_TOKEN;
 
     // Owner IDs configurados
-    const OWNER_DEPORTES = process.env.HUBSPOT_OWNER_DEPORTES || '30953137'; // Daniel Hernández
-    const OWNER_PLAYA = process.env.HUBSPOT_OWNER_PLAYA || '30586602'; // Matías Alucema
+    const OWNER_DEPORTES = process.env.HUBSPOT_OWNER_DEPORTES || '30953137'; // Daniel Hern�ndez
+    const OWNER_PLAYA = process.env.HUBSPOT_OWNER_PLAYA || '30586602'; // Mat�as Alucema
     const OWNER_MONTANA = process.env.HUBSPOT_OWNER_MONTANA || '29470097'; // Oscar Cordero
     const OWNER_DEFAULT = process.env.HUBSPOT_OWNER_DEFAULT || '32165115'; // Suntzu Tech
 
@@ -33,34 +33,34 @@ export async function POST(request: NextRequest) {
     }
 
     // ========================================
-    // ASIGNACIÓN INTELIGENTE DE PROPIETARIO
+    // ASIGNACI�N INTELIGENTE DE PROPIETARIO
     // ========================================
     const assignSmartOwner = (destino: string = '', vivienda: string = '', preocupaciones: string = ''): string => {
       const textoCombinado = `${destino} ${vivienda} ${preocupaciones}`.toLowerCase();
 
-      // 1. DEPORTES (Daniel Hernández)
+      // 1. DEPORTES (Daniel Hern�ndez)
       const deportesKeywords = ['golf', 'tenis', 'paddle', 'padel', 'gimnasio', 'deporte', 'deportivo', 'deportes', 'activo', 'fitness'];
       if (deportesKeywords.some(keyword => textoCombinado.includes(keyword))) {
-        console.log(`[assign-hubspot] 🎯 Match DEPORTES detectado → Daniel Hernández (${OWNER_DEPORTES})`);
+        console.log(`[assign-hubspot]  Match DEPORTES detectado  Daniel Hern�ndez (${OWNER_DEPORTES})`);
         return OWNER_DEPORTES;
       }
 
-      // 2. PLAYA/COSTA (Matías Alucema)
-      const playaKeywords = ['playa', 'costa', 'mar', 'mediterráneo', 'mediterraneo', 'vistas al mar', 'primera línea', 'primera linea', 'paseo marítimo', 'paseo maritimo'];
+      // 2. PLAYA/COSTA (Mat�as Alucema)
+      const playaKeywords = ['playa', 'costa', 'mar', 'mediterr�neo', 'mediterraneo', 'vistas al mar', 'primera l�nea', 'primera linea', 'paseo mar�timo', 'paseo maritimo'];
       if (playaKeywords.some(keyword => textoCombinado.includes(keyword))) {
-        console.log(`[assign-hubspot] 🏖️ Match PLAYA detectado → Matías Alucema (${OWNER_PLAYA})`);
+        console.log(`[assign-hubspot]  Match PLAYA detectado  Mat�as Alucema (${OWNER_PLAYA})`);
         return OWNER_PLAYA;
       }
 
-      // 3. MONTAÑA/NATURALEZA (Oscar Cordero)
-      const montanaKeywords = ['montaña', 'montana', 'sierra', 'naturaleza', 'tranquilidad', 'rural', 'campo', 'senderismo', 'esquí', 'esqui', 'ski', 'nieve'];
+      // 3. MONTA�A/NATURALEZA (Oscar Cordero)
+      const montanaKeywords = ['monta�a', 'montana', 'sierra', 'naturaleza', 'tranquilidad', 'rural', 'campo', 'senderismo', 'esqu�', 'esqui', 'ski', 'nieve'];
       if (montanaKeywords.some(keyword => textoCombinado.includes(keyword))) {
-        console.log(`[assign-hubspot] ⛰️ Match MONTAÑA detectado → Oscar Cordero (${OWNER_MONTANA})`);
+        console.log(`[assign-hubspot]  Match MONTA�A detectado  Oscar Cordero (${OWNER_MONTANA})`);
         return OWNER_MONTANA;
       }
 
       // 4. DEFAULT (Suntzu Tech) - Lujo, Relax, Familiar, Social
-      console.log(`[assign-hubspot] 🏠 Sin match específico → Suntzu Tech (DEFAULT: ${OWNER_DEFAULT})`);
+      console.log(`[assign-hubspot]  Sin match espec�fico  Suntzu Tech (DEFAULT: ${OWNER_DEFAULT})`);
       return OWNER_DEFAULT;
     };
 
@@ -72,9 +72,9 @@ export async function POST(request: NextRequest) {
 
     // Identificar nombre del owner asignado
     const ownerNames: Record<string, string> = {
-      [OWNER_DEPORTES]: 'Daniel Hernández (Deportes)',
-      [OWNER_PLAYA]: 'Matías Alucema (Playa/Costa)',
-      [OWNER_MONTANA]: 'Oscar Cordero (Montaña/Naturaleza)',
+      [OWNER_DEPORTES]: 'Daniel Hern�ndez (Deportes)',
+      [OWNER_PLAYA]: 'Mat�as Alucema (Playa/Costa)',
+      [OWNER_MONTANA]: 'Oscar Cordero (Monta�a/Naturaleza)',
       [OWNER_DEFAULT]: 'Suntzu Tech (Default/Lujo/Relax)'
     };
     const ownerName = ownerNames[ownerId] || `Unknown (${ownerId})`;
@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ========================================
-    // PASO 2: ASIGNAR OWNER Y ACTUALIZAR CALIFICACIÓN
+    // PASO 2: ASIGNAR OWNER Y ACTUALIZAR CALIFICACI�N
     // ========================================
     const updateResponse = await fetch(`https://api.hubapi.com/crm/v3/objects/contacts/${contactId}`, {
       method: 'PATCH',
@@ -193,99 +193,15 @@ export async function POST(request: NextRequest) {
 
     console.log(`[assign-hubspot] Contacto actualizado y asignado: ${contactId}`);
 
-    // ========================================
-    // PASO 3: CREAR TICKET 🎯 (siguiendo docs de ElevenLabs)
-    // ========================================
-    const ticketSubject = `Nuevo Lead: ${vivienda_elegida || 'Propiedad'} - ${nombre || email}`;
-    
-    // Construir el contenido del ticket con toda la info de calificación
-    const ticketContent = `
-📋 INFORMACIÓN DEL LEAD
-━━━━━━━━━━━━━━━━━━━━━━
-👤 Nombre: ${nombre || 'N/A'}
-📧 Email: ${email}
-📱 Teléfono: ${telefono || 'N/A'}
-
-🏠 PREFERENCIAS
-━━━━━━━━━━━━━━━━━━━━━━
-📍 Destino: ${destino_preferido || 'N/A'}
-🏡 Vivienda de interés: ${vivienda_elegida || 'N/A'}
-💰 Presupuesto: ${presupuesto || 'No especificado'}
-🏦 Financiación: ${financiacion || 'No especificado'}
-⏰ Urgencia: ${urgencia || 'No especificado'}
-
-📝 NOTAS DEL AGENTE
-━━━━━━━━━━━━━━━━━━━━━━
-${preocupaciones || 'Sin notas adicionales'}
-    `.trim();
-
-    // Determinar prioridad según urgencia
-    let priority = 'MEDIUM';
-    if (urgencia?.toLowerCase().includes('inmediata')) {
-      priority = 'HIGH';
-    } else if (urgencia?.toLowerCase().includes('explorando')) {
-      priority = 'LOW';
-    }
-    
-    const ticketResponse = await fetch('https://api.hubapi.com/crm/v3/objects/tickets', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${hubspotToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        properties: {
-          subject: ticketSubject,
-          content: ticketContent,
-          hs_pipeline: '0', // Pipeline por defecto
-          hs_pipeline_stage: '1', // Stage inicial
-          hs_ticket_priority: priority,
-          hubspot_owner_id: ownerId // Asignar el ticket al mismo owner
-        },
-        associations: [
-          {
-            to: { id: contactId },
-            types: [
-              {
-                associationCategory: 'HUBSPOT_DEFINED',
-                associationTypeId: 16 // Ticket to Contact
-              }
-            ]
-          }
-        ]
-      })
-    });
-
-    const ticketResult = await ticketResponse.json();
-
-    if (!ticketResponse.ok) {
-      console.error('[assign-hubspot] Error creando ticket:', ticketResult);
-      // No fallar todo el proceso, pero registrar el error
-      console.warn('[assign-hubspot] ⚠️ Contacto creado pero ticket falló');
-      
-      return NextResponse.json({
-        success: true,
-        message: 'Lead creado/actualizado pero hubo un error creando el ticket',
-        contactId,
-        ticketId: null,
-        warning: 'Ticket creation failed'
-      });
-    }
-
-    console.log(`[assign-hubspot] ✅ Ticket creado: ${ticketResult.id}`);
-
     console.log('\n' + '='.repeat(50));
-    console.log('[assign-hubspot] ✅ PROCESO COMPLETADO EXITOSAMENTE');
+    console.log('[assign-hubspot]  PROCESO COMPLETADO EXITOSAMENTE');
     console.log(`Contacto ID: ${contactId}`);
-    console.log(`Ticket ID: ${ticketResult.id}`);
-    console.log(`Prioridad: ${priority}`);
     console.log('='.repeat(50) + '\n');
 
     return NextResponse.json({
       success: true,
       message: 'Lead creado/actualizado y asignado en HubSpot',
-      contactId,
-      ticketId: ticketResult.id
+      contactId
     });
 
   } catch (error: any) {
