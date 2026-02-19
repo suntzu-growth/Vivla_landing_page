@@ -147,7 +147,7 @@ export default function Home() {
                 });
               }
 
-              return "Propiedades mostradas visualmente. No repitas la información.";
+              return "Propiedades mostradas visualmente. STOP. No generes texto adicional.";
             }
           },
           onMessage: (message: any) => {
@@ -161,9 +161,10 @@ export default function Home() {
               return;
             }
 
-            // 2. Log de texto post-tool (no bloquear)
+            // 2. Bloquear texto post-tool (generado por modelo fallback de ElevenLabs)
             if (toolCalledInTurnRef.current && message.role === 'agent') {
-              console.log('[Agent] Texto post-tool recibido:', text.substring(0, 80));
+              console.log('[Agent] Texto post-tool BLOQUEADO:', text.substring(0, 80));
+              return;
             }
 
             // 3. Solo si pasa los filtros, actualizar mensaje
