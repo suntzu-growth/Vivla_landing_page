@@ -6,11 +6,7 @@ export async function POST(request: NextRequest) {
     const {
       nombre, email, telefono,
       destino_preferido, vivienda_elegida, presupuesto,
-      financiacion, urgencia, preocupaciones,
-      // Parámetros opcionales para el ticket (pueden venir del agente o se generan automáticamente)
-      ticket_subject,
-      ticket_content,
-      ticket_priority,
+      financiacion, urgencia, preocupaciones
     } = body;
 
     if (!email) {
@@ -45,26 +41,26 @@ export async function POST(request: NextRequest) {
       // 1. DEPORTES (Daniel Hernández)
       const deportesKeywords = ['golf', 'tenis', 'paddle', 'padel', 'gimnasio', 'deporte', 'deportivo', 'deportes', 'activo', 'fitness'];
       if (deportesKeywords.some(keyword => textoCombinado.includes(keyword))) {
-        console.log(`[assign-hubspot] Match DEPORTES → Daniel Hernández (${OWNER_DEPORTES})`);
+        console.log(`[assign-hubspot] 🎯 Match DEPORTES detectado → Daniel Hernández (${OWNER_DEPORTES})`);
         return OWNER_DEPORTES;
       }
 
       // 2. PLAYA/COSTA (Matías Alucema)
       const playaKeywords = ['playa', 'costa', 'mar', 'mediterráneo', 'mediterraneo', 'vistas al mar', 'primera línea', 'primera linea', 'paseo marítimo', 'paseo maritimo'];
       if (playaKeywords.some(keyword => textoCombinado.includes(keyword))) {
-        console.log(`[assign-hubspot] Match PLAYA → Matías Alucema (${OWNER_PLAYA})`);
+        console.log(`[assign-hubspot] 🏖️ Match PLAYA detectado → Matías Alucema (${OWNER_PLAYA})`);
         return OWNER_PLAYA;
       }
 
       // 3. MONTAÑA/NATURALEZA (Oscar Cordero)
       const montanaKeywords = ['montaña', 'montana', 'sierra', 'naturaleza', 'tranquilidad', 'rural', 'campo', 'senderismo', 'esquí', 'esqui', 'ski', 'nieve'];
       if (montanaKeywords.some(keyword => textoCombinado.includes(keyword))) {
-        console.log(`[assign-hubspot] Match MONTAÑA → Oscar Cordero (${OWNER_MONTANA})`);
+        console.log(`[assign-hubspot] ⛰️ Match MONTAÑA detectado → Oscar Cordero (${OWNER_MONTANA})`);
         return OWNER_MONTANA;
       }
 
       // 4. DEFAULT (Suntzu Tech) - Lujo, Relax, Familiar, Social
-      console.log(`[assign-hubspot] Sin match específico → Suntzu Tech (DEFAULT: ${OWNER_DEFAULT})`);
+      console.log(`[assign-hubspot] 🏠 Sin match específico → Suntzu Tech (DEFAULT: ${OWNER_DEFAULT})`);
       return OWNER_DEFAULT;
     };
 
@@ -91,7 +87,7 @@ export async function POST(request: NextRequest) {
     console.log(`Owner asignado: ${ownerName}`);
     console.log('='.repeat(50) + '\n');
 
-    // Propiedades de calificación
+    // Propiedades de calificacion
     const qualificationProps: Record<string, string> = {};
     if (destino_preferido) qualificationProps.destino_preferido = destino_preferido;
     if (vivienda_elegida) qualificationProps.vivienda_elegida = vivienda_elegida;
@@ -125,9 +121,11 @@ export async function POST(request: NextRequest) {
     let contactId: string;
 
     if (searchResult.total > 0) {
+      // Contacto existente - actualizar con datos nuevos
       contactId = searchResult.results[0].id;
       console.log(`[assign-hubspot] Contacto encontrado: ${contactId}`);
     } else {
+      // Crear contacto nuevo
       console.log('[assign-hubspot] Contacto no encontrado, creando nuevo...');
 
       const createResponse = await fetch('https://api.hubapi.com/crm/v3/objects/contacts', {
@@ -196,25 +194,40 @@ export async function POST(request: NextRequest) {
     console.log(`[assign-hubspot] Contacto actualizado y asignado: ${contactId}`);
 
     // ========================================
-    // PASO 3: CREAR TICKET (una sola vez, aquí)
+    // PASO 3: CREAR TICKET 🎯 (siguiendo docs de ElevenLabs)
     // ========================================
-    // Generar contenido del ticket automáticamente si no se pasa explícitamente
-    const autoSubject = ticket_subject || `Nuevo Lead Calificado${vivienda_elegida ? ` - ${vivienda_elegida}` : ''}`;
-    const autoContent = ticket_content || [
-      `Lead calificado interesado${vivienda_elegida ? ` en ${vivienda_elegida}` : ''}.`,
-      '',
-      'Detalles:',
-      destino_preferido ? `Destino: ${destino_preferido}` : '',
-      vivienda_elegida ? `Vivienda elegida: ${vivienda_elegida}` : '',
-      presupuesto ? `Presupuesto: ${presupuesto}` : '',
-      financiacion !== undefined ? `Financiación: ${financiacion || 'No necesita'}` : '',
-      urgencia ? `Urgencia: ${urgencia}` : '',
-      preocupaciones ? `\nPerfil del cliente:\n${preocupaciones}` : '',
-    ].filter(Boolean).join('\n');
+    const ticketSubject = `Nuevo Lead: ${vivienda_elegida || 'Propiedad'} - ${nombre || email}`;
+    
+    // Construir el contenido del ticket con toda la info de calificación
+    const ticketContent = `
+📋 INFORMACIÓN DEL LEAD
+━━━━━━━━━━━━━━━━━━━━━━
+👤 Nombre: ${nombre || 'N/A'}
+📧 Email: ${email}
+📱 Teléfono: ${telefono || 'N/A'}
 
-    let ticketId: string | null = null;
+🏠 PREFERENCIAS
+━━━━━━━━━━━━━━━━━━━━━━
+📍 Destino: ${destino_preferido || 'N/A'}
+🏡 Vivienda de interés: ${vivienda_elegida || 'N/A'}
+💰 Presupuesto: ${presupuesto || 'No especificado'}
+🏦 Financiación: ${financiacion || 'No especificado'}
+⏰ Urgencia: ${urgencia || 'No especificado'}
 
-    const createTicketResponse = await fetch('https://api.hubapi.com/crm/v3/objects/tickets', {
+📝 NOTAS DEL AGENTE
+━━━━━━━━━━━━━━━━━━━━━━
+${preocupaciones || 'Sin notas adicionales'}
+    `.trim();
+
+    // Determinar prioridad según urgencia
+    let priority = 'MEDIUM';
+    if (urgencia?.toLowerCase().includes('inmediata')) {
+      priority = 'HIGH';
+    } else if (urgencia?.toLowerCase().includes('explorando')) {
+      priority = 'LOW';
+    }
+    
+    const ticketResponse = await fetch('https://api.hubapi.com/crm/v3/objects/tickets', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${hubspotToken}`,
@@ -222,57 +235,57 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         properties: {
-          subject: autoSubject,
-          content: autoContent,
-          hs_pipeline: '0',
-          hs_ticket_priority: ticket_priority || 'HIGH',
-          hs_pipeline_stage: '1'
-        }
+          subject: ticketSubject,
+          content: ticketContent,
+          hs_pipeline: '0', // Pipeline por defecto
+          hs_pipeline_stage: '1', // Stage inicial
+          hs_ticket_priority: priority,
+          hubspot_owner_id: ownerId // Asignar el ticket al mismo owner
+        },
+        associations: [
+          {
+            to: { id: contactId },
+            types: [
+              {
+                associationCategory: 'HUBSPOT_DEFINED',
+                associationTypeId: 16 // Ticket to Contact
+              }
+            ]
+          }
+        ]
       })
     });
 
-    if (createTicketResponse.ok) {
-      const ticketResult = await createTicketResponse.json();
-      ticketId = ticketResult.id;
-      console.log(`[assign-hubspot] Ticket creado: ${ticketId}`);
+    const ticketResult = await ticketResponse.json();
 
-      // Asociar ticket al contacto
-      const associateResponse = await fetch('https://api.hubapi.com/crm/v4/associations/tickets/contacts/batch/create', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${hubspotToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          inputs: [{
-            from: { id: ticketId },
-            to: { id: contactId },
-            type: 'ticket_to_contact'
-          }]
-        })
+    if (!ticketResponse.ok) {
+      console.error('[assign-hubspot] Error creando ticket:', ticketResult);
+      // No fallar todo el proceso, pero registrar el error
+      console.warn('[assign-hubspot] ⚠️ Contacto creado pero ticket falló');
+      
+      return NextResponse.json({
+        success: true,
+        message: 'Lead creado/actualizado pero hubo un error creando el ticket',
+        contactId,
+        ticketId: null,
+        warning: 'Ticket creation failed'
       });
-
-      if (!associateResponse.ok) {
-        const assocError = await associateResponse.json();
-        console.warn('[assign-hubspot] Ticket creado pero fallo al asociar al contacto:', assocError);
-      } else {
-        console.log(`[assign-hubspot] Ticket ${ticketId} asociado al contacto ${contactId}`);
-      }
-    } else {
-      const ticketError = await createTicketResponse.json();
-      console.warn('[assign-hubspot] No se pudo crear el ticket (no es crítico):', ticketError);
     }
 
+    console.log(`[assign-hubspot] ✅ Ticket creado: ${ticketResult.id}`);
+
     console.log('\n' + '='.repeat(50));
-    console.log('[assign-hubspot] PROCESO COMPLETADO EXITOSAMENTE');
-    console.log(`Contacto ID: ${contactId}${ticketId ? ` | Ticket ID: ${ticketId}` : ''}`);
+    console.log('[assign-hubspot] ✅ PROCESO COMPLETADO EXITOSAMENTE');
+    console.log(`Contacto ID: ${contactId}`);
+    console.log(`Ticket ID: ${ticketResult.id}`);
+    console.log(`Prioridad: ${priority}`);
     console.log('='.repeat(50) + '\n');
 
     return NextResponse.json({
       success: true,
       message: 'Lead creado/actualizado y asignado en HubSpot',
       contactId,
-      ticketId
+      ticketId: ticketResult.id
     });
 
   } catch (error: any) {

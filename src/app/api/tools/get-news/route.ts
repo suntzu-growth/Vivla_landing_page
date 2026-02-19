@@ -13,8 +13,8 @@ export async function POST(request: NextRequest) {
 
     console.log('[get_news] Recibido:', { category, limit });
 
-    // NOTA: Se ha eliminado el scraping externo.
-    // Ahora devuelve noticias/listados internos de SunTzu Real Estate.
+    // NOTA: Se ha eliminado el scraping de orain.eus.
+    // Ahora devuelve noticias/listados internos de Vivla.
 
     const dataPath = './data/scraping/noticias-completas.json';
     let validNews = [];
@@ -33,13 +33,13 @@ export async function POST(request: NextRequest) {
       console.error('[get_news] Error leyendo datos locales:', e);
     }
 
-    console.log('[get_news] Noticias de SunTzu cargadas:', validNews.length);
+    console.log('[get_news] Noticias de Vivla cargadas:', validNews.length);
 
     return NextResponse.json({
       success: true,
       count: validNews.length,
-      category: category || 'suntzu',
-      source: 'Internal SunTzu Data',
+      category: category || 'vivla',
+      source: 'Internal Vivla Data',
       news: validNews
     });
 
