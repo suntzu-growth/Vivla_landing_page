@@ -93,8 +93,23 @@ export function ResultsStream({ isStreaming, results, text }: any) {
     setModalImages(null);
   };
 
+  // Cuando llegan results, fast-forward el texto para mostrar tarjetas inmediatamente
   useEffect(() => {
-    // ✅ CRÍTICO: Limpiar el interval anterior SIEMPRE que text cambie
+    if (results && results.length > 0 && isTyping) {
+      // Cancelar animación de tipado
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      // Mostrar todo el texto de golpe
+      setDisplayedText(text || '');
+      currentTypedTextRef.current = text || '';
+      setIsTyping(false);
+    }
+  }, [results]);
+
+  useEffect(() => {
+    // CRÍTICO: Limpiar el interval anterior SIEMPRE que text cambie
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
@@ -108,7 +123,15 @@ export function ResultsStream({ isStreaming, results, text }: any) {
       return;
     }
 
-    // ✅ Detectar si el texto es una extensión para no resetear la animación
+    // Si ya hay results, mostrar texto completo sin animación
+    if (results && results.length > 0) {
+      setDisplayedText(text);
+      currentTypedTextRef.current = text;
+      setIsTyping(false);
+      return;
+    }
+
+    // Detectar si el texto es una extensión para no resetear la animación
     const isExtension = text.startsWith(currentTypedTextRef.current) && currentTypedTextRef.current.length > 0;
 
     if (!isExtension) {
@@ -181,8 +204,8 @@ export function ResultsStream({ isStreaming, results, text }: any) {
       )}
 
       {/* Tarjetas Visuales con Galería de Imágenes */}
-      {/* Solo mostrar cuando termine de escribir el texto */}
-      {!isTyping && results && results.length > 0 && (
+      {/* Se muestran inmediatamente cuando llegan results (el typing se fast-forwards) */}
+      {results && results.length > 0 && (
         <div className="grid gap-4 pt-4 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-500">
           {results.map((item: any, idx: number) => (
             <div

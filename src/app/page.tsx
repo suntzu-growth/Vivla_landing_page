@@ -93,8 +93,19 @@ export default function Home() {
                 return { ...p, images: finalImages };
               });
 
-              // PASO 2: Mostrar tarjetas INMEDIATAMENTE (con o sin imágenes)
-              updateAssistantMessage(null, false, initialResults, true);
+              // PASO 2: Mostrar tarjetas INMEDIATAMENTE, preservando texto descriptivo previo
+              setMessages(prev => {
+                const updated = [...prev];
+                const lastIdx = updated.findLastIndex(m => m.role === 'assistant');
+                if (lastIdx !== -1) {
+                  updated[lastIdx] = {
+                    ...updated[lastIdx],
+                    results: initialResults,
+                    isStreaming: false
+                  };
+                }
+                return updated;
+              });
 
               // PASO 3: Auto-scrape en background para propiedades sin imágenes
               const needsScrape = initialResults.some(p => p.images.length < 3 && p.url);
@@ -121,40 +132,22 @@ export default function Home() {
                   }
                   return p;
                 })).then(updatedResults => {
-                  // Actualizar las tarjetas con las imágenes scraped
-                  updateAssistantMessage(null, false, updatedResults, true);
+                  // Actualizar solo las tarjetas con imágenes scraped, preservar texto
+                  setMessages(prev => {
+                    const updated = [...prev];
+                    const lastIdx = updated.findLastIndex(m => m.role === 'assistant');
+                    if (lastIdx !== -1) {
+                      updated[lastIdx] = {
+                        ...updated[lastIdx],
+                        results: updatedResults
+                      };
+                    }
+                    return updated;
+                  });
                 });
               }
 
-              return "Propiedades mostradas visualmente al usuario. No generes texto adicional.";
-            },
-
-            displayTextResponse: async ({ text }: any) => {
-              toolCalledInTurnRef.current = true;
-              console.log('[Client Tool] displayTextResponse:', text);
-              updateAssistantMessage(text, false, undefined, true);
-              return "Texto mostrado al usuario. No generes texto adicional.";
-            },
-
-            saveUserData: async ({ name, email }: any) => {
-              console.log('[Client Tool] saveUserData:', { name, email });
-              try {
-                const res = await fetch("/api/tools/save-user-data", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    name,
-                    email,
-                    conversation_id: conversationRef.current?.conversationId
-                  })
-                });
-                const data = await res.json();
-                console.log('[Client Tool] saveUserData Response:', data);
-                return "Datos guardados en el sheet (simulado)";
-              } catch (e) {
-                console.error('[Client Tool] Error saving data:', e);
-                return "Error al guardar datos";
-              }
+              return "Propiedades mostradas visualmente. No repitas la información.";
             }
           },
           onMessage: (message: any) => {
@@ -168,10 +161,9 @@ export default function Home() {
               return;
             }
 
-            // 2. Bloquear todo texto post-tool en este turno
+            // 2. Log de texto post-tool (no bloquear)
             if (toolCalledInTurnRef.current && message.role === 'agent') {
-              console.log('[Agent] Bloqueando post-tool message');
-              return;
+              console.log('[Agent] Texto post-tool recibido:', text.substring(0, 80));
             }
 
             // 3. Solo si pasa los filtros, actualizar mensaje
@@ -180,12 +172,19 @@ export default function Home() {
                 const updated = [...prev];
                 const lastIdx = updated.findLastIndex(m => m.role === 'assistant');
                 if (lastIdx !== -1) {
-                  if (updated[lastIdx].content.includes(text.trim())) return prev;
+                  const currentContent = updated[lastIdx].content || '';
+
+                  // Anti-duplicado: solo ignorar si el texto EXACTO ya está al final del contenido
+                  const trimmedText = text.trim();
+                  if (trimmedText && currentContent.endsWith(trimmedText)) {
+                    console.log('[Agent] Texto duplicado ignorado:', trimmedText.substring(0, 50));
+                    return prev;
+                  }
 
                   const baseContent = (
-                    updated[lastIdx].content === 'Consultando...' ||
-                    updated[lastIdx].content === '🔍 Buscando en SunTzu...'
-                  ) ? '' : updated[lastIdx].content;
+                    currentContent === 'Consultando...' ||
+                    currentContent === '🔍 Buscando en SunTzu...'
+                  ) ? '' : currentContent;
 
                   updated[lastIdx] = {
                     ...updated[lastIdx],
